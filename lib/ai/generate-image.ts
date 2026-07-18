@@ -6,12 +6,6 @@ import { z } from "zod";
 
 import { buildStylePrompt } from "./style-prompt";
 
-if (!process.env.GEMINI_API_KEY) {
-  throw new Error("GEMINI_API_KEY is not set");
-}
-
-const client = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-
 const STYLE_REFS_DIR = path.join(process.cwd(), "public", "style-refs");
 
 const MIME_TYPES_BY_EXTENSION: Record<string, string> = {
@@ -32,6 +26,22 @@ export type GenerateImageResult =
   | { outcome: "success"; image: GeneratedImage; styleReference: string }
   | { outcome: "refused" }
   | { outcome: "failed" };
+
+let client: GoogleGenAI | null = null;
+
+// Lazy init: reading GEMINI_API_KEY at module scope would throw during Next.js's
+// build-time page data collection, before real env vars are available.
+function getClient(): GoogleGenAI {
+  if (!process.env.GEMINI_API_KEY) {
+    throw new Error("GEMINI_API_KEY is not set");
+  }
+
+  if (!client) {
+    client = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+  }
+
+  return client;
+}
 
 async function pickStyleReference(): Promise<{
   filename: string;
@@ -59,7 +69,7 @@ async function pickStyleReference(): Promise<{
 export async function generateImage(userPrompt: string): Promise<GenerateImageResult> {
   const styleRef = await pickStyleReference();
 
-  const response = await client.models.generateContent({
+  const response = await getClient().models.generateContent({
     model: "gemini-2.5-flash-image",
     contents: [
       { inlineData: { data: styleRef.data, mimeType: styleRef.mimeType } },

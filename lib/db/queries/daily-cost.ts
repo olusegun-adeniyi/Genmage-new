@@ -1,6 +1,6 @@
 import { eq, sql } from "drizzle-orm";
 
-import { db } from "@/lib/db";
+import { getDb } from "@/lib/db";
 import { dailyCost } from "@/lib/db/schema";
 
 // Nano Banana per-image cost (PRD §9) — flat rate regardless of prompt length or output size.
@@ -11,14 +11,14 @@ function todayUtc(): string {
 }
 
 export async function getTodaysCostUsd(): Promise<number> {
-  const [row] = await db.select().from(dailyCost).where(eq(dailyCost.date, todayUtc()));
+  const [row] = await getDb().select().from(dailyCost).where(eq(dailyCost.date, todayUtc()));
   return row ? Number(row.amountUsd) : 0;
 }
 
 export async function incrementTodaysCost(): Promise<void> {
   const date = todayUtc();
 
-  await db
+  await getDb()
     .insert(dailyCost)
     .values({ date, amountUsd: GENERATION_COST_USD.toString() })
     .onConflictDoUpdate({

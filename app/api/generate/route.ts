@@ -8,7 +8,9 @@ import { hashIp } from "@/lib/ip-hash";
 import { generateSlug } from "@/lib/slug";
 import { uploadGenerationImage } from "@/lib/storage/upload-image";
 
-const DAILY_COST_CAP_USD = Number(process.env.DAILY_COST_CAP_USD);
+// This route writes to Postgres, calls Gemini, and uploads to Storage on every
+// request — never statically analyzable, so opt out of build-time evaluation.
+export const dynamic = "force-dynamic";
 
 const requestSchema = z.object({
   prompt: z.string().trim().min(3).max(200),
@@ -26,9 +28,10 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "invalid_prompt" }, { status: 400 });
   }
 
+  const dailyCostCapUsd = Number(process.env.DAILY_COST_CAP_USD);
   const costSoFar = await getTodaysCostUsd();
 
-  if (costSoFar >= DAILY_COST_CAP_USD) {
+  if (costSoFar >= dailyCostCapUsd) {
     return NextResponse.json({ error: "cost_cap_reached" }, { status: 402 });
   }
 
