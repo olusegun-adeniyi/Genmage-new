@@ -155,7 +155,7 @@ POST /api/generate
   → uploads image to Supabase Storage,
   → writes generation row (including style),
   → increments today's `daily_cost` row,
-  → returns { slug, imageUrl, prompt }
+  → returns { slug, imageUrl, prompt, style }
   → errors: 402 (cost cap hit), 500 (generation failed)
 
 GET /api/styles
@@ -165,6 +165,7 @@ GET /api/styles
 GET /api/quota
   → returns { capReached: boolean, resetsAt: ISO string }
   → used by the frontend to show the "studio's closed" empty state and hide the input once the daily cap is reached
+  → **status: not yet built.** Documented since Day 3 (§11 step 16) but never implemented — POST /api/generate and GET /api/styles exist, this one doesn't
 
 GET /g/[slug]
   → server-rendered React page (not an API route),
@@ -267,7 +268,7 @@ Deliberately NOT in the stack:
 23. Install Fraunces + Geist via next/font
 24. Define tokens in `globals.css`: paper white bg, ink black text, terracotta accent, borders, radii
 25. Paper-grain SVG background
-26. Redesign `app/page.tsx` with serif input, rotating placeholder, editorial layout, style switcher at top of controls panel
+26. Redesign `app/page.tsx` with serif input, rotating placeholder, editorial layout, style switcher at top of controls panel — **blocked on `GET /api/quota` existing** (§7); the home screen can't render a quota indicator or gracefully show the cost-cap empty state without it
 27. Design result surface with fade-in and three action buttons
 
 **Day 5 — Polish**
