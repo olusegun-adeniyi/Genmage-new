@@ -1,6 +1,6 @@
 # PRD — Genmage
 
-A style-locked image generator. Users describe anything; the output arrives in a single, curated watercolor illustration style. No prompt engineering, no style menus, no dials — just the vibe.
+A style-locked image generator. Users describe anything; the output renders in one of a small library of tasteful, fully-realized illustration styles curated by Olusegun. No prompt engineering, no dials — pick a style, describe the subject, that's it.
 
 ---
 
@@ -8,9 +8,9 @@ A style-locked image generator. Users describe anything; the output arrives in a
 
 Every AI image tool gives users infinite knobs and no taste. Choosing a style, writing a proper prompt, iterating for consistency — it's work, and it's the wrong work if you just want a nice illustration. The result is that most people either give up or generate slop.
 
-Meanwhile, the person who *has* found a style they love (in this case, Olusegun's loose hand-painted watercolor food sketch aesthetic, refined through many ChatGPT sessions) has no easy way to share it. Sending friends the prompt doesn't work — it depends on the model, the reference images, the exact phrasing.
+Meanwhile, the person who *has* found a style they love has no easy way to share it. Sending friends the prompt doesn't work — it depends on the model, the reference images, the exact phrasing. A style worth having is worth curating and maintaining properly, not passing around as a fragile prompt.
 
-Genmage solves this by locking the style server-side. Users type what they want to see. The app silently prepends the exact style prompt and calls the image model. Every output belongs to the same visual family. The style is the moat and the product.
+Genmage solves this by curating a small library of tasteful, fully-realized illustration styles server-side. The user doesn't tune anything — they choose from what we've made, describe what they want to see, and the app silently prepends that style's exact locked prompt before calling the image model. Every output within a style belongs to the same visual family. v1 launches with one style, Watercolor — Olusegun's loose hand-painted food sketch aesthetic, refined through many ChatGPT sessions. Future styles are added only once they clear the same bar Watercolor did: a curated reference set and a consistency test that holds up. The curated style library is the moat and the product.
 
 ## 2. User
 
@@ -34,7 +34,7 @@ Within 2 weeks of shipping:
 
 ## 4. Core principles
 
-- **The style is invisible to the user.** They never see the style portion of the prompt. They never pick a style. The style just *is*.
+- **The user picks from styles we've curated, but never sees the prompt engineering.** Each style is fully realized before shipping — no coming-soon tiles, no disabled states. v1 launches with one style (Watercolor); future styles appear as tiles in the switcher only when they meet the same reference-curation and consistency-test bar.
 - **One input, one output.** No history sidebar in the main view, no settings, no advanced mode. If the interface has more than one meaningful control, we've failed.
 - **The UI belongs to the same universe as the outputs.** Serif type, warm paper background, generous whitespace, slow editorial motion. If you take a screenshot of the app and one of the illustrations, they should feel of a piece.
 - **Free for friends, protected from abuse.** A daily cost cap exists so a runaway browser tab or a shared-too-widely link doesn't drain a credit card. Per-IP rate limiting is deferred until pre-public-launch (see §9) — v1 ships to a small trusted group.
@@ -49,6 +49,12 @@ Within 2 weeks of shipping:
 - Empty state below the input: 4 curated example generations from Olusegun's own testing, each showing the image + prompt used. Clicking one populates the input with that prompt for the user to modify.
 - Generation button: single primary action, warm terracotta accent. Disabled while a generation is in flight.
 - Result surface: fades in below the input when generation completes. Shows the image, the user's prompt, and three actions: [Download], [Copy link], [New generation].
+
+**Style switcher**
+- Renders a horizontal row of style tiles at the top of the controls panel
+- v1: one tile (Watercolor), pre-selected, not visibly interactive as a switcher
+- When style #2 exists, the switcher becomes a real choice
+- Each tile shows a small example illustration + style name
 
 **Generation flow**
 - User types → clicks Generate → loading state appears (typewriter status: "mixing the pigments...", "letting it dry...", "adding the shadow...") → image appears with slow fade
@@ -82,7 +88,7 @@ Within 2 weeks of shipping:
 - Custom aspect ratios (v1 is 1024×1024 only)
 - High-res download (2048px, 3× the API cost — gate behind a "worth it" moment later)
 - Text overlays / captions
-- Multi-style variants (defeats the "one locked style" principle unless carefully designed)
+- Additional styles beyond Watercolor (doodle, dither, simple line, etc.) — the switcher architecture already supports this (§6, §11); adding one is curation work (reference images, a locked prompt, a consistency test), not a code project. Added opportunistically post-launch, no fixed schedule.
 - Any form of user account
 - Any form of payment
 - Comment / like / follow system
@@ -99,13 +105,14 @@ Within 2 weeks of shipping:
 
 ## 6. Data model
 
-Supabase Postgres via Drizzle ORM. Two tables.
+Supabase Postgres via Drizzle ORM. Three tables.
 
 ```
 generation
   id                uuid, primary key
   slug              text, unique, 8-char random (base62)
   prompt            text, the user's input
+  style             text, not null, default 'watercolor' — references style.id
   style_reference   text, filename of the style ref used (e.g. "ref_03.jpg")
   image_url         text, Supabase Storage public URL
   ip_hash           text, sha256 of IP + salt — logged now, enforced once per-IP rate limiting ships (see §9)
@@ -116,30 +123,44 @@ generation
   INDEX on slug (for permalink lookup)
   INDEX on featured, created_at desc (for gallery)
 
+style
+  id                 text, primary key (e.g. "watercolor", "doodle", "dither", "simple")
+  name               text, display name (e.g. "Watercolor")
+  prompt             text, the locked style prompt for this style
+  active             boolean, default false — only active styles appear in the UI
+  example_image_url  text, tile thumbnail
+  created_at         timestamptz, default now()
+
 daily_cost
   date              date, primary key (UTC date)
   amount_usd        numeric(6,2), default 0, running total spend for that date
 ```
 
+**Seed data:** one `style` row — `id: 'watercolor'`, `name: 'Watercolor'`, `active: true`, `prompt`: *"The illustration style is a loose hand-painted watercolor food sketch with soft transparent washes, organic ink-like outlines, warm natural colors, expressive brush textures, subtle color bleeding, and a light blue-grey shadow on a clean white background."* Style reference images move from `public/style-refs/` to `public/style-refs/watercolor/` — the folder path is now keyed by style id, ready for `public/style-refs/doodle/` etc. later.
+
 Cost cap state lives in Postgres, not a separate KV store — there's no per-IP counter to justify Redis while rate limiting is deferred (see §9).
 
 ## 7. API surface
 
-Three routes. All Next.js Route Handlers, all server-side.
+Four routes. All Next.js Route Handlers, all server-side.
 
 ```
 POST /api/generate
-  body: { prompt: string }
-  → validates prompt (3–200 chars, no obvious injection),
+  body: { prompt: string, style?: string }        (style defaults to "watercolor" if omitted)
+  → validates prompt (3–200 chars, no obvious injection) and style (must match an active style row),
   → hashes IP (logged for future rate limiting, not yet enforced — see §9),
   → checks global cost cap against today's `daily_cost` row,
-  → selects random style reference from public/style-refs/,
+  → looks up the style's locked prompt and selects a random reference image from public/style-refs/{style}/,
   → calls Nano Banana with prompt + reference,
   → uploads image to Supabase Storage,
-  → writes generation row,
+  → writes generation row (including style),
   → increments today's `daily_cost` row,
   → returns { slug, imageUrl, prompt }
   → errors: 402 (cost cap hit), 500 (generation failed)
+
+GET /api/styles
+  → returns active styles: [{ id, name, exampleImageUrl }]
+  → used by the frontend to render the style switcher tiles
 
 GET /api/quota
   → returns { capReached: boolean, resetsAt: ISO string }
@@ -156,23 +177,26 @@ GET /g/[slug]
 **Model:** Google Gemini 2.5 Flash Image (Nano Banana) via `@google/genai` SDK.
 
 **Approach: reference-image + text.** Every generation call includes:
-1. A randomly selected style reference image from `/public/style-refs/` (Olusegun's curated best outputs from ChatGPT)
-2. The locked style prompt: *"The illustration style is a loose hand-painted watercolor food sketch with soft transparent washes, organic ink-like outlines, warm natural colors, expressive brush textures, subtle color bleeding, and a light blue-grey shadow on a clean white background."*
+1. A randomly selected style reference image from `/public/style-refs/{style}/` (one curated folder per style; v1 only has `watercolor/`)
+2. The locked style prompt for the requested style, looked up from the `style` table (see §6) — not hardcoded
 3. The user's prompt, prepended with "Subject: "
 
 Combined structure (pseudocode):
 ```
+const style = await getActiveStyle(styleId)   // from `style` table
+const styleRef = await pickRandomReference(`public/style-refs/${styleId}/`)
+
 generateContent({
   model: "gemini-2.5-flash-image",
   contents: [
     { inlineData: { data: styleRefBase64, mimeType: "image/jpeg" } },
-    { text: `${LOCKED_STYLE_PROMPT}\n\nSubject: ${userPrompt}\n\nMatch the illustration style of the reference image exactly. 1024x1024 square composition, centered.` }
+    { text: `${style.prompt}\n\nSubject: ${userPrompt}\n\nMatch the illustration style of the reference image exactly. 1024x1024 square composition, centered.` }
   ],
   config: { responseModalities: ["IMAGE"] }
 })
 ```
 
-Full prompt logic lives in `lib/ai/style-prompt.ts` and `lib/ai/generate-image.ts`.
+Full prompt logic lives in `lib/ai/generate-image.ts`, which resolves the style's locked prompt and reference folder by style ID rather than importing a hardcoded constant.
 
 **Fallback:** If Nano Banana outputs disappoint in Day 2 testing, swap to Flux 1.1 Pro via Replicate (~$0.04/image) or GPT-Image-1 via OpenAI (~$0.19/image, highest quality). The generate-image module is the only thing that changes.
 
@@ -235,31 +259,35 @@ Deliberately NOT in the stack:
 17. Cost-cap UI: quota-exhausted empty state ("the studio's closed for the day")
 18. Test hitting the cap locally
 
-**Day 4 — Design system**
-19. Install Fraunces + Geist via next/font
-20. Define tokens in `globals.css`: paper white bg, ink black text, terracotta accent, borders, radii
-21. Paper-grain SVG background
-22. Redesign `app/page.tsx` with serif input, rotating placeholder, editorial layout
-23. Design result surface with fade-in and three action buttons
+**Day 4 — Design system + multi-style scaffolding**
+19. Add `style` table (Drizzle migration), seed one `watercolor` row; add `style` column to `generation` (default `'watercolor'`) — scaffolding for future styles, even though only one ships in v1
+20. Move `public/style-refs/*` → `public/style-refs/watercolor/`; update `generate-image.ts` to resolve the style's locked prompt and reference folder by style ID instead of a hardcoded constant
+21. Update `POST /api/generate` to accept `{ prompt, style }` (defaults to `'watercolor'`); add `GET /api/styles`
+22. Build the style switcher component — single pre-selected, non-interactive tile in v1
+23. Install Fraunces + Geist via next/font
+24. Define tokens in `globals.css`: paper white bg, ink black text, terracotta accent, borders, radii
+25. Paper-grain SVG background
+26. Redesign `app/page.tsx` with serif input, rotating placeholder, editorial layout, style switcher at top of controls panel
+27. Design result surface with fade-in and three action buttons
 
 **Day 5 — Polish**
-24. Curated empty-state gallery with 4 hand-picked examples
-25. Loading state: typewriter status messages
-26. Micro-interactions: download button feedback, copy-link confirmation
-27. Error states (cost cap, generation failure) with warm copy
-28. Run UI-REVIEW.md against the app
+28. Curated empty-state gallery with 4 hand-picked examples
+29. Loading state: typewriter status messages
+30. Micro-interactions: download button feedback, copy-link confirmation
+31. Error states (cost cap, generation failure) with warm copy
+32. Run UI-REVIEW.md against the app
 
 **Day 6 — Permalinks + sharing**
-29. `/g/[slug]` page with server-rendered generation
-30. Open Graph meta tags with the generation image
-31. Test link previews on iMessage, WhatsApp, X, Instagram DM
-32. Add [Copy link] button on result surface
+33. `/g/[slug]` page with server-rendered generation
+34. Open Graph meta tags with the generation image
+35. Test link previews on iMessage, WhatsApp, X, Instagram DM
+36. Add [Copy link] button on result surface
 
 **Day 7 — Ship**
-33. Generate 20 examples for gallery seeding
-34. Lighthouse audit, fix any P0 issues
-35. Deploy to production (custom domain if available)
-36. Send link to 5 friends, watch analytics, note first-day feedback
+37. Generate 20 examples for gallery seeding
+38. Lighthouse audit, fix any P0 issues
+39. Deploy to production (custom domain if available)
+40. Send link to 5 friends, watch analytics, note first-day feedback
 
 ## 12. Non-goals for v1 (saying out loud)
 

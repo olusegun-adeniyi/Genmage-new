@@ -10,7 +10,7 @@ This is a small, tasteful side project. The build quality matters because it's a
 
 ## Project context (one paragraph)
 
-Genmage is a style-locked watercolor illustration generator. Users type a subject; the app silently prepends a locked style prompt and calls Gemini's Nano Banana image model with a curated style reference image. Every output belongs to the same visual family. No accounts, no payments. Shareable permalinks. A $10/day Postgres-backed cost cap protects spend; per-IP rate limiting is deferred until pre-public-launch (PRD §9). Stack: Next.js 15 + TypeScript + Tailwind v4 + Supabase + Google GenAI SDK + Vercel. Read PRD.md before any non-trivial change.
+Genmage is a style-locked illustration generator built on a curated multi-style architecture. Users pick a style (v1 ships one: Watercolor) and type a subject; the app silently prepends that style's locked prompt — stored in the `style` table, not in code — and calls Gemini's Nano Banana image model with a curated reference image from that style's folder. Every output within a style belongs to the same visual family. No accounts, no payments. Shareable permalinks. A $10/day Postgres-backed cost cap protects spend; per-IP rate limiting is deferred until pre-public-launch (PRD §9). Stack: Next.js 15 + TypeScript + Tailwind v4 + Supabase + Google GenAI SDK + Vercel. Read PRD.md before any non-trivial change.
 
 ## Operating rules
 
@@ -18,7 +18,7 @@ Genmage is a style-locked watercolor illustration generator. Users type a subjec
 
    **Before finishing any UI work, run it against `UI-REVIEW.md`.** Every screen, every state. Failed items either get fixed or get logged as a deliberate exception in the commit message (`[UI-EXCEPTION: <item #> — <reason>]`).
 
-2. **The style prompt is sacred.** `lib/ai/style-prompt.ts` contains the exact locked style string. Never modify it without asking. Never let user input override it. Never expose it to the client.
+2. **Style prompts are sacred.** Each style's locked prompt lives in the `style` table (`style.prompt`), not in application code. Edit it only via a seed migration or directly in Supabase Studio — never from a route handler, never in response to user input. Never let user input override it. Never expose it to the client.
 
 3. **Never let user text reach the model without safety.** Prompt goes through Zod validation first (3–200 chars). If Gemini refuses (safety filter), surface the refusal cleanly — never retry with modifications.
 
@@ -39,7 +39,7 @@ Genmage is a style-locked watercolor illustration generator. Users type a subjec
 ## What "good code" looks like here
 
 - Types first. Define the type, then write the function.
-- Pure functions where possible. `lib/ai/style-prompt.ts` is a constant + a builder function, no side effects.
+- Pure functions where possible. Once a style's prompt is fetched from the DB, building the final text sent to Gemini is a pure function — no other side effects.
 - Small files. If a file exceeds 200 lines, split it.
 - Naming honestly. `generateImage` not `run`. `styleReferenceFilename` not `ref`.
 - Comments explain *why*, not *what*. Business decisions get one line ("gemini charges per generation regardless of success — increment counter only after success"). Code descriptions do not.
@@ -51,7 +51,7 @@ Genmage is a style-locked watercolor illustration generator. Users type a subjec
 - Anything that uses `any`, `as any`, or `@ts-ignore`
 - Anything that hardcodes a color, radius, or spacing outside of `globals.css` tokens
 - Anything that adds a settings UI, user accounts, or "advanced options"
-- Anything that reaches for tRPC, GraphQL, or an RPC layer — REST is fine for 3 routes
+- Anything that reaches for tRPC, GraphQL, or an RPC layer — REST is fine for 4 routes
 - Anything that uses moment.js or dayjs (use `date-fns` if needed, but likely you don't)
 - Anything that expands the DB schema beyond what PRD.md section 6 defines without asking
 
@@ -71,7 +71,7 @@ If you find yourself reaching for glassmorphism, purple gradients, dark mode, or
 
 ## Style reference images
 
-`public/style-refs/` contains 3–5 curated illustrations from Olusegun's ChatGPT sessions. Do not add, remove, or rename these without asking. The generate-image function picks one at random per request. This is what enforces style consistency; the text prompt alone is not enough.
+`public/style-refs/{style_id}/` contains 3–5 curated illustrations per style (v1: `public/style-refs/watercolor/` only). Do not add, remove, or rename these without asking. The generate-image function picks one at random per request, scoped to the requested style's folder. This is what enforces style consistency; the text prompt alone is not enough. A new style needs its own folder in place before it can go `active` in the `style` table.
 
 ## Permalink and Open Graph
 
@@ -85,7 +85,7 @@ Don't guess on:
 - New dependencies
 - New patterns not in this doc or PRD.md
 - Whether a feature is P0 vs P1
-- Whether to modify the schema, the style prompt, or the reference images
+- Whether to modify the schema, any style's locked prompt, or its reference images
 - Whether to deviate from the folder structure
 
 A 30-second question saves a 30-minute rewrite.
