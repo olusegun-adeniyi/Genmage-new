@@ -57,17 +57,15 @@ Genmage is a style-locked illustration generator built on a curated multi-style 
 
 ## Aesthetic non-negotiables
 
-- Paper white background `#fbfaf6`, ink black text `#1a1815`, warm terracotta accent `#c4664a`
-- Fraunces (serif) for the prompt input, headings, and editorial copy
-- Geist Sans for UI elements (buttons, labels, quota indicators)
-- Geist Mono for the URL / slug on the permalink page
-- Subtle paper-grain SVG background — barely visible, always present
-- 1px borders in `rgba(26, 24, 21, 0.08)`. No shadows on cards.
-- Slow motion: `transition duration-300 ease-out` is the default (not 150ms — this is editorial, not snappy)
-- Generation fade-in: 600ms, ease-out
-- The single "delight" moment is when the generation appears — soft fade, no confetti, no sparkles
+- Background `#fafaf9`, foreground (ink) `#0a0a0a`, muted `#f5f5f4`, muted-foreground `#737373`. No terracotta, no color accent — primary actions are solid foreground-on-background. Monochrome by design.
+- Inter for everything — headings, body, UI, slugs, URLs, quota indicators. No serif, no separate mono. `font-feature-settings: "cv11" 1, "ss01" 1` on the body (single-story 'a', open digits).
+- Tabular numerals (`font-variant-numeric: tabular-nums`) wherever digits appear, so they don't shift width.
+- 1px borders in `rgba(0, 0, 0, 0.08)`, hover state `rgba(0, 0, 0, 0.12)`. No shadows on cards.
+- Radius scale: `rounded-sm` (6px), `rounded-md` (12px), `rounded-lg` (20px).
+- Fast, precise motion: `transition duration-150 ease-out` is the default. This is deliberately snappy, not editorial-slow.
+- The generation fade-in is still the one deliberate "delight" moment (currently 600ms, ease-out) — worth revisiting the exact number once the result surface is actually built, but it should read as a deliberate pause against the otherwise-fast system, not another 150ms transition.
 
-If you find yourself reaching for glassmorphism, purple gradients, dark mode, or generic "AI product" tropes — stop. The reference is Kinfolk magazine layouts and It's Nice That article pages, not a Vercel template.
+If you find yourself reaching for glassmorphism, gradients, dark mode, or generic "AI product" tropes — stop. The reference is Linear: precise, monochrome, information-dense without feeling cramped, motion that feels instant, not performative.
 
 ## Style reference images
 

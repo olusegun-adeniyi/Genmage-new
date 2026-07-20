@@ -36,7 +36,7 @@ Within 2 weeks of shipping:
 
 - **The user picks from styles we've curated, but never sees the prompt engineering.** Each style is fully realized before shipping — no coming-soon tiles, no disabled states. v1 launches with one style (Watercolor); future styles appear as tiles in the switcher only when they meet the same reference-curation and consistency-test bar.
 - **One input, one output.** No history sidebar in the main view, no settings, no advanced mode. If the interface has more than one meaningful control, we've failed.
-- **The UI belongs to the same universe as the outputs.** Serif type, warm paper background, generous whitespace, slow editorial motion. If you take a screenshot of the app and one of the illustrations, they should feel of a piece.
+- **The UI is a neutral frame for the art.** Monochrome, precise, gets out of the way. The illustration is the only color on the page — that contrast is deliberate, not an oversight. Screenshot the app and the UI should read as quiet infrastructure; the generated image is the only thing that pops.
 - **Free for friends, protected from abuse.** A daily cost cap exists so a runaway browser tab or a shared-too-widely link doesn't drain a credit card. Per-IP rate limiting is deferred until pre-public-launch (see §9) — v1 ships to a small trusted group.
 - **Every generation is shareable.** Each result has a permalink with proper Open Graph tags. Sharing is the growth mechanism.
 
@@ -45,9 +45,9 @@ Within 2 weeks of shipping:
 ### P0 — must ship in week 1
 
 **Home (`/`)**
-- Serif-typed prompt input, centered, no chrome. Placeholder rotates through curated example prompts every 4 seconds ("a quiet cup of matcha on a rainy morning", "an old man reading by a window", etc.)
+- Inter-typed prompt input, centered, no chrome. Placeholder rotates through curated example prompts every 4 seconds ("a quiet cup of matcha on a rainy morning", "an old man reading by a window", etc.)
 - Empty state below the input: 4 curated example generations from Olusegun's own testing, each showing the image + prompt used. Clicking one populates the input with that prompt for the user to modify.
-- Generation button: single primary action, warm terracotta accent. Disabled while a generation is in flight.
+- Generation button: single primary action, solid foreground-on-background. Disabled while a generation is in flight.
 - Result surface: fades in below the input when generation completes. Shows the image, the user's prompt, and three actions: [Download], [Copy link], [New generation].
 
 **Style switcher**
@@ -218,13 +218,13 @@ Full prompt logic lives in `lib/ai/generate-image.ts`, which resolves the style'
 ## 10. Tech stack — locked
 
 - **Framework:** Next.js 15 App Router + TypeScript strict
-- **Styling:** Tailwind v4 + Fraunces (serif) + Geist Sans + Geist Mono
+- **Styling:** Tailwind v4 + Inter (single typeface, no serif, no separate mono)
 - **Image gen:** `@google/genai` (Gemini 2.5 Flash Image / Nano Banana)
 - **DB:** Supabase Postgres + Drizzle ORM (also backs the cost cap — see §9)
 - **Storage:** Supabase Storage (public bucket for generated images)
 - **Hosting:** Vercel
 - **Analytics:** Vercel Analytics (usage counts only, no personal data)
-- **Fonts:** `next/font/google` for Fraunces, `geist` package for Geist
+- **Fonts:** `next/font/google` for Inter (weights 400/500/600/700)
 
 Deliberately NOT in the stack:
 - Any auth service
@@ -265,30 +265,29 @@ Deliberately NOT in the stack:
 20. Move `public/style-refs/*` → `public/style-refs/watercolor/`; update `generate-image.ts` to resolve the style's locked prompt and reference folder by style ID instead of a hardcoded constant
 21. Update `POST /api/generate` to accept `{ prompt, style }` (defaults to `'watercolor'`); add `GET /api/styles`
 22. Build the style switcher component — single pre-selected, non-interactive tile in v1
-23. Install Fraunces + Geist via next/font
-24. Define tokens in `globals.css`: paper white bg, ink black text, terracotta accent, borders, radii
-25. Paper-grain SVG background
-26. Redesign `app/page.tsx` with serif input, rotating placeholder, editorial layout, style switcher at top of controls panel — **blocked on `GET /api/quota` existing** (§7); the home screen can't render a quota indicator or gracefully show the cost-cap empty state without it
-27. Design result surface with fade-in and three action buttons
+23. Install Inter via next/font (weights 400/500/600/700)
+24. Define tokens in `globals.css`: background/foreground/muted/border/danger, radius scale, Inter font mapping, `duration-150` default transition
+25. Redesign `app/page.tsx` with Inter input, rotating placeholder, monochrome layout, style switcher at top of controls panel — **blocked on `GET /api/quota` existing** (§7); the home screen can't render a quota indicator or gracefully show the cost-cap empty state without it
+26. Design result surface with fade-in and three action buttons
 
 **Day 5 — Polish**
-28. Curated empty-state gallery with 4 hand-picked examples
-29. Loading state: typewriter status messages
-30. Micro-interactions: download button feedback, copy-link confirmation
-31. Error states (cost cap, generation failure) with warm copy
-32. Run UI-REVIEW.md against the app
+27. Curated empty-state gallery with 4 hand-picked examples
+28. Loading state: typewriter status messages
+29. Micro-interactions: download button feedback, copy-link confirmation
+30. Error states (cost cap, generation failure) with warm copy
+31. Run UI-REVIEW.md against the app
 
 **Day 6 — Permalinks + sharing**
-33. `/g/[slug]` page with server-rendered generation
-34. Open Graph meta tags with the generation image
-35. Test link previews on iMessage, WhatsApp, X, Instagram DM
-36. Add [Copy link] button on result surface
+32. `/g/[slug]` page with server-rendered generation
+33. Open Graph meta tags with the generation image
+34. Test link previews on iMessage, WhatsApp, X, Instagram DM
+35. Add [Copy link] button on result surface
 
 **Day 7 — Ship**
-37. Generate 20 examples for gallery seeding
-38. Lighthouse audit, fix any P0 issues
-39. Deploy to production (custom domain if available)
-40. Send link to 5 friends, watch analytics, note first-day feedback
+36. Generate 20 examples for gallery seeding
+37. Lighthouse audit, fix any P0 issues
+38. Deploy to production (custom domain if available)
+39. Send link to 5 friends, watch analytics, note first-day feedback
 
 ## 12. Non-goals for v1 (saying out loud)
 

@@ -13,25 +13,26 @@ Apply to:
 
 **Pass criteria:**
 - Colors from CSS variables in `globals.css` `@theme` block. No hex codes in component files.
-- Approved palette only: `--paper` (`#fbfaf6`), `--ink` (`#1a1815`), `--terracotta` (`#c4664a`), `--muted`, `--muted-foreground`, `--border` (`rgba(26,24,21,0.08)`), `--border-hover` (`rgba(26,24,21,0.16)`), `--danger`.
+- Approved palette only: `--background` (`#fafaf9`), `--foreground` (`#0a0a0a`), `--muted` (`#f5f5f4`), `--muted-foreground` (`#737373`), `--border` (`rgba(0,0,0,0.08)`), `--border-hover` (`rgba(0,0,0,0.12)`), `--danger` (`#b91c1c`). No terracotta, no color accent — monochrome only.
 - Spacing from Tailwind scale (`gap-4`, `gap-6`, `gap-8`, `gap-12`). No arbitrary values.
-- Border radii from token set: `rounded-md` (6px), `rounded-lg` (12px), `rounded-xl` (20px). No `rounded-[9px]`.
-- Fonts: Fraunces for editorial (prompt input, headings, prompt display), Geist Sans for UI, Geist Mono for slugs/URLs. No third serif or third sans.
+- Border radii from token set: `rounded-sm` (6px), `rounded-md` (12px), `rounded-lg` (20px). No `rounded-[9px]`.
+- Typography: Inter for everything — headings, body, UI, slugs, URLs, quota indicators. No separate mono, no second sans. Use tabular numerals (`font-variant-numeric: tabular-nums`) on any numeric display for alignment.
 
 **Fail signals:**
 - Any inline `style={{ color: '#...' }}`
 - Tailwind palette colors (`bg-orange-500`, `text-stone-800`) not mapped to tokens
 - Any arbitrary spacing or radius
 - A new font import
+- A numeric display (quota count, slug) without tabular-nums
 
 ---
 
 ## 2. Is there a clear primary action?
 
 **Pass criteria:**
-- One primary action per screen, terracotta accent fill, dominant.
+- One primary action per screen, solid foreground fill, dominant.
 - Secondary actions are ghost or bordered variant, in `--muted-foreground`.
-- No two terracotta-filled buttons visible simultaneously.
+- No two solid-fill buttons visible simultaneously.
 
 **Fail signals:**
 - "Generate" and "Try again" both styled as primary
@@ -45,15 +46,15 @@ Apply to:
 ## 3. Is spacing consistent?
 
 **Pass criteria:**
-- Vertical rhythm uses `gap-8` (32px) or `gap-12` (48px) for major sections — generous, editorial.
-- Card internals use `gap-6` (24px).
+- Vertical rhythm uses `gap-4` (16px) or `gap-6` (24px) for most sections. `gap-8` (32px) is reserved for genuinely major section breaks — the exception, not the default. This is Linear-density, not the old generous-editorial scale.
+- Card internals use `gap-4` (16px).
 - Text-to-text within a group uses `gap-2` (8px).
 - Horizontal padding at layout level: `px-6` mobile, `px-12` desktop.
 - Result surface and input have equal horizontal padding.
 
 **Fail signals:**
 - Two visually similar elements with different spacing for no reason
-- Cramped feel — Genmage is editorial, not dashboard
+- Loose, airy spacing used as a default rather than a deliberate exception — tight and precise is correct here
 - Custom margin hacks on individual children
 
 ---
@@ -78,12 +79,12 @@ Apply to:
 
 **Pass criteria:**
 - **Loading:** Typewriter status messages rotating every ~2s ("mixing the pigments...", "letting it dry...", "adding the shadow..."). Not a generic spinner. Placeholder shape matches the coming result (square, same width as image).
-- **Empty (home):** 4 curated example generations displayed as a gentle grid below the input. Each is clickable to populate the input with that prompt. Copy above them: "or start from one of these" in Fraunces italic.
+- **Empty (home):** 4 curated example generations displayed as a gentle grid below the input. Each is clickable to populate the input with that prompt. Copy above them: "or start from one of these" in `--muted-foreground`.
 - **Rate limited (per-IP):** Warm copy: "You've made 20 today — the studio reopens at midnight UTC." Input disabled, examples still visible.
 - **Cost capped (global):** Warm copy: "The studio's closed for the day — come back tomorrow." Input hidden, examples still visible.
 - **Error (generation failed):** "That one didn't work — try a different prompt." Input remains populated, button re-enabled.
 - **Safety refusal (Gemini blocked prompt):** "That prompt didn't work — try something else." No detail on why.
-- **Permalink 404:** Beautiful centered message in Fraunces: "This one's gone." + link home.
+- **Permalink 404:** Beautiful centered message: "This one's gone." + link home.
 
 **Fail signals:**
 - Any state showing a raw error message or JSON
@@ -96,9 +97,9 @@ Apply to:
 ## 6. Is the hierarchy obvious within 3 seconds?
 
 **Pass criteria:**
-- Squint test: blurred, the primary element (input on `/`, image on `/g/[slug]`) is still identifiable.
-- One H1 per screen. Fraunces, large (`text-3xl` mobile, `text-5xl` desktop), tight tracking.
-- The user's prompt on the result surface is Fraunces italic, `text-lg`, sits above the image with breathing room.
+- Squint test: blurred, the primary element (canvas on `/`, image on `/g/[slug]`) is still identifiable.
+- One H1 per screen, if present at all — Inter, large (`text-3xl` mobile, `text-5xl` desktop), tight tracking. The new layout may not need a heading at all; the canvas does the work a headline used to.
+- The user's prompt on the result surface is Inter, `text-lg`, sits above the image with breathing room.
 - Supporting elements (quota indicator, footer link) recede: `text-sm text-muted-foreground`.
 - Three-second rule: put the screen in front of yourself fresh. Can you say what to do next in three seconds? If not, fix hierarchy.
 
@@ -107,7 +108,7 @@ Apply to:
 - Prompt input competing visually with generated image on the result state
 - Quota indicator ("15 left today") competing with the Generate button
 
-**Genmage-specific reading order on `/`:** (1) Fraunces heading if any, (2) prompt input placeholder, (3) Generate button, (4) example gallery. On `/g/[slug]`: (1) generated image, (2) prompt in italic, (3) copy-link action.
+**Genmage-specific reading order on `/` (mobile):** (1) canvas — dominant, top half of the viewport, (2) prompt input — visual weight, sits below the canvas, (3) style tile + Generate — bottom of screen, thumb-reachable (matches item 7's mobile-reach requirement). On `/g/[slug]`: (1) generated image, (2) prompt, (3) copy-link action.
 
 ---
 
@@ -148,8 +149,8 @@ Apply to:
 ## 9. Is the UI too dense?
 
 **Pass criteria:**
-- Generous whitespace. This is Kinfolk-magazine energy, not Notion sidebar.
-- On `/`, the only elements are: heading (optional), input, button, quota indicator (small), and (in empty state) example gallery. That's it.
+- Precise and uncluttered. This is Linear energy — tight, not empty — not Notion-sidebar clutter and not Kinfolk-generous either.
+- On `/`, the only elements are: canvas, input, style tile, button, quota indicator (small), and (in empty state) example gallery. That's it.
 - On `/g/[slug]`, the only elements are: image, prompt, action buttons, footer link. That's it.
 - Sections separated by whitespace, not borders where possible.
 - No decoration for decoration's sake — every element earns its place.
@@ -167,12 +168,12 @@ Apply to:
 ## 10. Is the copy clear and human?
 
 **Pass criteria:**
-- Plain, warm English.
-- Placeholder examples in the input feel like Kinfolk headlines: "a quiet cup of matcha on a rainy morning", "an old man reading by a window", "wildflowers in a jam jar" — never "Generate an image of..."
+- Plain, warm, direct English — Linear-precise, not Kinfolk-editorial. Say the thing, don't dress it up.
+- Placeholder examples in the input are evocative and specific: "a quiet cup of matcha on a rainy morning", "an old man reading by a window", "wildflowers in a jam jar" — never "Generate an image of..."
 - Loading messages are handmade, not mechanical: "mixing the pigments...", "letting it dry...", "adding the shadow...". Never "Processing...", "Loading...", "Please wait...".
 - Rate limit / cost cap copy uses the studio metaphor: "the studio's closed", "the studio reopens at midnight". Consistent voice.
 - Button labels are verbs, one or two words: "Generate", "Download", "Copy link", "Try again". Sentence case.
-- No emojis in UI copy. None. The aesthetic is quieter than that.
+- No emojis in UI copy. None. Still banned.
 - Error copy says what failed and offers a next step: "That one didn't work — try a different prompt." Never "Error 500" or "Something went wrong".
 - Footer sentence: "Generated images are provided for personal use. Don't be a jerk." Warm, human, brief.
 
@@ -184,7 +185,7 @@ Apply to:
 - Any emoji in the UI
 - Mixed capitalization across the same screen
 
-**Genmage tone:** Editorial, warm, direct. Treats the user as taste-having and busy. Not a coach, not a cheerleader, not "AI-forward". A quiet workshop, not a factory floor.
+**Genmage tone:** Direct, warm, human — Linear-precise, not Kinfolk-editorial. Treats the user as taste-having and busy. Not a coach, not a cheerleader, not "AI-forward." Precise, not precious.
 
 ---
 
