@@ -108,6 +108,7 @@ Skip: apologies, restating the prompt, line-by-line summaries of code. He can re
 - Don't leave `pnpm dev` hanging — start, verify, kill
 - Migrations: `drizzle-kit generate` first, review SQL, then `migrate`
 - Never commit `.env`, `node_modules`, or Gemini API responses cached to disk
+- Phases and commits are 1:1. Every discrete phase of work ends with a commit and a push before any next-phase work begins. Do not batch multiple phases into one commit. If a phase completes and no commit instruction is given by Olusegun, ask before proceeding — silence on commits is not permission to defer them.
 
 ## Specifically for Codex
 
