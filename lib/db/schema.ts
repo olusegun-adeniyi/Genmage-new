@@ -1,11 +1,27 @@
 import { boolean, date, index, numeric, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
 
+export const style = pgTable("style", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  prompt: text("prompt").notNull(),
+  active: boolean("active").notNull().default(false),
+  exampleImageUrl: text("example_image_url"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export type Style = typeof style.$inferSelect;
+export type NewStyle = typeof style.$inferInsert;
+
 export const generation = pgTable(
   "generation",
   {
     id: uuid("id").primaryKey().defaultRandom(),
     slug: text("slug").notNull().unique(),
     prompt: text("prompt").notNull(),
+    style: text("style")
+      .notNull()
+      .default("watercolor")
+      .references(() => style.id),
     styleReference: text("style_reference").notNull(),
     imageUrl: text("image_url").notNull(),
     ipHash: text("ip_hash").notNull(),
