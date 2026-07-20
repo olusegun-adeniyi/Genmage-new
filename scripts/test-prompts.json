@@ -1,0 +1,36 @@
+[
+  { "bucket": "food", "style": "evocative", "adversarial": false, "prompt": "a quiet cup of matcha on a rainy morning" },
+  { "bucket": "food", "style": "evocative", "adversarial": false, "prompt": "a warm bowl of jollof rice on a sunny kitchen counter" },
+  { "bucket": "food", "style": "evocative", "adversarial": false, "prompt": "a slice of lemon tart cooling on the windowsill" },
+  { "bucket": "food", "style": "minimal", "adversarial": false, "prompt": "croissant" },
+  { "bucket": "food", "style": "minimal", "adversarial": false, "prompt": "sushi platter" },
+  { "bucket": "food", "style": "minimal", "adversarial": false, "prompt": "mango" },
+
+  { "bucket": "objects", "style": "evocative", "adversarial": false, "prompt": "an old brass compass on a worn map" },
+  { "bucket": "objects", "style": "evocative", "adversarial": false, "prompt": "a well-loved fountain pen resting on a notebook" },
+  { "bucket": "objects", "style": "evocative", "adversarial": false, "prompt": "a chipped ceramic mug beside a stack of letters" },
+  { "bucket": "objects", "style": "minimal", "adversarial": false, "prompt": "teapot" },
+  { "bucket": "objects", "style": "minimal", "adversarial": false, "prompt": "vinyl record" },
+  { "bucket": "objects", "style": "minimal", "adversarial": false, "prompt": "reading glasses" },
+
+  { "bucket": "scenes", "style": "evocative", "adversarial": false, "prompt": "foggy morning by a Scottish loch" },
+  { "bucket": "scenes", "style": "evocative", "adversarial": false, "prompt": "the corner of a Lagos market at dusk" },
+  { "bucket": "scenes", "style": "evocative", "adversarial": false, "prompt": "the last light over a quiet harbor" },
+  { "bucket": "scenes", "style": "minimal", "adversarial": false, "prompt": "beach" },
+  { "bucket": "scenes", "style": "minimal", "adversarial": false, "prompt": "forest path" },
+  { "bucket": "scenes", "style": "minimal", "adversarial": false, "prompt": "London rooftop" },
+
+  { "bucket": "people_animals", "style": "adversarial", "adversarial": true, "prompt": "an old man reading by a window" },
+  { "bucket": "people_animals", "style": "adversarial", "adversarial": true, "prompt": "a red fox curled in autumn leaves" },
+  { "bucket": "people_animals", "style": "adversarial", "adversarial": true, "prompt": "a child watering plants on a balcony" },
+  { "bucket": "people_animals", "style": "adversarial", "adversarial": true, "prompt": "a barista pulling espresso" },
+  { "bucket": "people_animals", "style": "adversarial", "adversarial": true, "prompt": "a sleeping cat by a fireplace" },
+  { "bucket": "people_animals", "style": "adversarial", "adversarial": true, "prompt": "a woman writing in a journal" },
+
+  { "bucket": "abstract_mood", "style": "adversarial", "adversarial": true, "prompt": "the feeling of solitude" },
+  { "bucket": "abstract_mood", "style": "adversarial", "adversarial": true, "prompt": "a Sunday morning" },
+  { "bucket": "abstract_mood", "style": "adversarial", "adversarial": true, "prompt": "the smell of rain on hot pavement" },
+  { "bucket": "abstract_mood", "style": "adversarial", "adversarial": true, "prompt": "nostalgia" },
+  { "bucket": "abstract_mood", "style": "adversarial", "adversarial": true, "prompt": "the color of homesickness" },
+  { "bucket": "abstract_mood", "style": "adversarial", "adversarial": true, "prompt": "waiting" }
+]
