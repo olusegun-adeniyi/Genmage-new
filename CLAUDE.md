@@ -18,23 +18,31 @@ Genmage is a style-locked illustration generator built on a curated multi-style 
 
    **Before finishing any UI work, run it against `UI-REVIEW.md`.** Every screen, every state. Failed items either get fixed or get logged as a deliberate exception in the commit message (`[UI-EXCEPTION: <item #> — <reason>]`).
 
-2. **Style prompts are sacred.** Each style's locked prompt lives in the `style` table (`style.prompt`), not in application code. Edit it only via a seed migration or directly in Supabase Studio — never from a route handler, never in response to user input. Never let user input override it. Never expose it to the client.
+2. **Before writing or modifying any component with a visual surface — layout, spacing, typography, borders, colors, motion, state design — invoke the Frontend Design Skill and the UI/UX Pro Max Skill.** This is mandatory, not optional. These skills exist because craft-level decisions require pattern knowledge that isn't in the training data or in the PRD. Skipping them produces work that meets the spec but misses the taste bar.
 
-3. **Never let user text reach the model without safety.** Prompt goes through Zod validation first (3–200 chars). If Gemini refuses (safety filter), surface the refusal cleanly — never retry with modifications.
+   **When to invoke:** any new component, any layout change, any tuning pass on existing components, before running the `UI-REVIEW.md` walkthrough.
 
-4. **The cost cap is non-negotiable; per-IP rate limiting is deferred (PRD §9).** Every successful generation increments the Postgres `daily_cost` row for the current UTC date. If the cost-cap check fails at request time, respond 402 before calling the model. No exceptions "for testing". `ip_hash` is still logged on every generation so rate limiting can be added later without a schema change.
+   **When not to invoke:** pure schema, API, backend, or data layer work; documentation changes; dependency management.
 
-5. **Server components by default.** `'use client'` only where genuinely needed (the prompt form, the copy-link button, the download button). If you're adding `'use client'`, write a one-line comment explaining why.
+   After invoking, briefly note in the response which skill(s) were used and what specifically was drawn from them (a pattern, a spacing principle, a state design). This creates accountability and shows the skill was actually applied, not just name-dropped.
 
-6. **Follow the folder structure.** Queries in `lib/db/queries/`. AI logic in `lib/ai/`. No Supabase client imports in components — go through the query layer.
+3. **Style prompts are sacred.** Each style's locked prompt lives in the `style` table (`style.prompt`), not in application code. Edit it only via a seed migration or directly in Supabase Studio — never from a route handler, never in response to user input. Never let user input override it. Never expose it to the client.
 
-7. **Validation at every boundary.** Zod for API inputs, Gemini SDK responses, generation row inserts. No `any`. No `as any`. No `@ts-ignore`.
+4. **Never let user text reach the model without safety.** Prompt goes through Zod validation first (3–200 chars). If Gemini refuses (safety filter), surface the refusal cleanly — never retry with modifications.
 
-8. **Small scope is a feature.** Don't add pagination to the gallery. Don't add user accounts. Don't add "share to Twitter" buttons — the copy-link + OG tags handle that. Don't add analytics events beyond what Vercel Analytics already tracks.
+5. **The cost cap is non-negotiable; per-IP rate limiting is deferred (PRD §9).** Every successful generation increments the Postgres `daily_cost` row for the current UTC date. If the cost-cap check fails at request time, respond 402 before calling the model. No exceptions "for testing". `ip_hash` is still logged on every generation so rate limiting can be added later without a schema change.
 
-9. **The permalink is a first-class page.** `/g/[slug]` should be as beautifully designed as `/`. It's the version most people will see, because they arrive via shared links.
+6. **Server components by default.** `'use client'` only where genuinely needed (the prompt form, the copy-link button, the download button). If you're adding `'use client'`, write a one-line comment explaining why.
 
-10. **When Gemini is slow, tell the user.** Loading state uses the typewriter status messages defined in the PRD. No generic spinner. Silence during a 10-second wait is a UX failure.
+7. **Follow the folder structure.** Queries in `lib/db/queries/`. AI logic in `lib/ai/`. No Supabase client imports in components — go through the query layer.
+
+8. **Validation at every boundary.** Zod for API inputs, Gemini SDK responses, generation row inserts. No `any`. No `as any`. No `@ts-ignore`.
+
+9. **Small scope is a feature.** Don't add pagination to the gallery. Don't add user accounts. Don't add "share to Twitter" buttons — the copy-link + OG tags handle that. Don't add analytics events beyond what Vercel Analytics already tracks.
+
+10. **The permalink is a first-class page.** `/g/[slug]` should be as beautifully designed as `/`. It's the version most people will see, because they arrive via shared links.
+
+11. **When Gemini is slow, tell the user.** Loading state uses the typewriter status messages defined in the PRD. No generic spinner. Silence during a 10-second wait is a UX failure.
 
 ## What "good code" looks like here
 
