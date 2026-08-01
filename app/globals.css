@@ -8,6 +8,7 @@
   --color-border: rgba(0, 0, 0, 0.08);
   --color-border-hover: rgba(0, 0, 0, 0.12);
   --color-danger: #b91c1c;
+  --color-input: #e8e4e4;
 
   --radius-sm: 6px;
   --radius-md: 12px;
@@ -27,4 +28,14 @@ body {
   @apply font-sans antialiased font-normal text-base leading-relaxed text-foreground bg-background;
   font-feature-settings: "cv11" 1, "ss01" 1;
   font-variant-numeric: tabular-nums;
+}
+
+/* No built-in Tailwind utility for this — hides the scrollbar on the sample-images row while keeping it scrollable. */
+.scrollbar-hide {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
 }
