@@ -10,7 +10,7 @@ This is a small, tasteful side project. The build quality matters because it's a
 
 ## Project context (one paragraph)
 
-Genmage is a style-locked illustration generator built on a curated multi-style architecture. Users pick a style (v1 ships one: Watercolor) and type a subject; the app silently prepends that style's locked prompt — stored in the `style` table, not in code — and calls Gemini's Nano Banana image model with a curated reference image from that style's folder. Every output within a style belongs to the same visual family. No accounts, no payments. Shareable permalinks. A $10/day Postgres-backed cost cap protects spend; per-IP rate limiting is deferred until pre-public-launch (PRD §9). Stack: Next.js 15 + TypeScript + Tailwind v4 + Supabase + Google GenAI SDK + Vercel. Read PRD.md before any non-trivial change.
+Genmage is a style-locked illustration generator built on a curated multi-style architecture. Users pick a style (v1 ships one: Watercolor) and type a subject; the app silently prepends that style's locked prompt — stored in the `style` table, not in code — and calls Gemini's Nano Banana image model with a curated reference image from that style's folder. Every output within a style belongs to the same visual family. The interface is dual-tone: a dark controls panel paired with a light canvas, history log, and edit panel — the one green accent lives only on the Export button, nowhere else. Post-generation editing offers six considered levers (rotate, saturation, tint, black-and-white, border colour, background colour) — nudging a generation, not a photo editor. No accounts, no payments. Shareable permalinks. A $10/day Postgres-backed cost cap protects spend; per-IP rate limiting is deferred until pre-public-launch (PRD §9). Stack: Next.js 15 + TypeScript + Tailwind v4 + Supabase + Google GenAI SDK + Vercel. Read PRD.md before any non-trivial change.
 
 ## Operating rules
 
@@ -65,15 +65,18 @@ Genmage is a style-locked illustration generator built on a curated multi-style 
 
 ## Aesthetic non-negotiables
 
-- Background `#fafaf9`, foreground (ink) `#0a0a0a`, muted `#f5f5f4`, muted-foreground `#737373`. No terracotta, no color accent — primary actions are solid foreground-on-background. Monochrome by design.
+- **Light surfaces** (canvas, history panel, edit panel): background `#fafaf9`, foreground (ink) `#0a0a0a`, muted `#f5f5f4`, muted-foreground `#737373`.
+- **Dark surface** (controls panel only): background reuses the light-surface foreground value (`#0a0a0a`) — same hex, different role, one token doing double duty on purpose. New `--foreground-on-dark` token for its text, white/warm-white. Wordmark stays white on this surface.
+- **One accent, one place:** `--accent` (`#16A34A`, green) is reserved exclusively for the Export button. Nowhere else — that exclusivity is the point, not a starting palette to expand from later.
+- Slider and swatch component patterns (rotate, saturation, tint, B&W, border/background color pickers) aren't specified at the token level yet — define them during the Phase D/E build (PRD §11), not before.
 - Inter for everything — headings, body, UI, slugs, URLs, quota indicators. No serif, no separate mono. `font-feature-settings: "cv11" 1, "ss01" 1` on the body (single-story 'a', open digits).
 - Tabular numerals (`font-variant-numeric: tabular-nums`) wherever digits appear, so they don't shift width.
-- 1px borders in `rgba(0, 0, 0, 0.08)`, hover state `rgba(0, 0, 0, 0.12)`. No shadows on cards.
+- 1px borders in `rgba(0, 0, 0, 0.08)`, hover state `rgba(0, 0, 0, 0.12)` — light surfaces. The dark surface needs its own border treatment (likely `rgba(255, 255, 255, *)`); not yet specified, define alongside the other dark tokens in Phase D.
 - Radius scale: `rounded-sm` (6px), `rounded-md` (12px), `rounded-lg` (20px).
 - Fast, precise motion: `transition duration-150 ease-out` is the default. This is deliberately snappy, not editorial-slow.
 - The generation fade-in is still the one deliberate "delight" moment (currently 600ms, ease-out) — worth revisiting the exact number once the result surface is actually built, but it should read as a deliberate pause against the otherwise-fast system, not another 150ms transition.
 
-If you find yourself reaching for glassmorphism, gradients, dark mode, or generic "AI product" tropes — stop. The reference is Linear: precise, monochrome, information-dense without feeling cramped, motion that feels instant, not performative.
+If you find yourself reaching for glassmorphism, gradients, or generic "AI product" tropes — stop. The reference is Linear: precise, information-dense without feeling cramped, motion that feels instant, not performative. Dark mode is no longer categorically off-limits — it's the controls panel specifically, not a global theme toggle. Don't let it creep beyond that one surface.
 
 ## Style reference images
 

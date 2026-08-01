@@ -36,19 +36,20 @@ Within 2 weeks of shipping:
 
 - **The user picks from styles we've curated, but never sees the prompt engineering.** Each style is fully realized before shipping — no coming-soon tiles, no disabled states. v1 launches with one style (Watercolor); future styles appear as tiles in the switcher only when they meet the same reference-curation and consistency-test bar.
 - **One input, one output.** No history sidebar in the main view, no settings, no advanced mode. If the interface has more than one meaningful control, we've failed.
-- **The UI is a neutral frame for the art.** Monochrome, precise, gets out of the way. The illustration is the only color on the page — that contrast is deliberate, not an oversight. Screenshot the app and the UI should read as quiet infrastructure; the generated image is the only thing that pops.
+- **The surfaces are dual-tone by design, not decoration.** Dark controls panel (bg `#0a0a0a`, foreground white/warm-white) alongside a light canvas + light edit/history panels (bg `#fafaf9`, foreground `#0a0a0a`). Green accent (`#16A34A`) appears only on the Export button — that's the one place color earns its place. Wordmark stays white on the dark surface. The two surfaces sit as distinct rounded panels within a shared page background — they don't blend, they're intentionally different regions with different roles. The aesthetic anchor is still Linear/Vercel-family restraint — considered spacing, generous whitespace, snap motion, no gradients, no decorative flourishes. The dark surface is functional contrast to make the light canvas feel like art on a wall, not just another form field.
 - **Free for friends, protected from abuse.** A daily cost cap exists so a runaway browser tab or a shared-too-widely link doesn't drain a credit card. Per-IP rate limiting is deferred until pre-public-launch (see §9) — v1 ships to a small trusted group.
 - **Every generation is shareable.** Each result has a permalink with proper Open Graph tags. Sharing is the growth mechanism.
+- **The user can nudge, not overhaul.** Post-generation editing is for finishing touches — rotation, color feel, background swap, aspect ratio — not photo editing. If someone wants Photoshop-level control, this isn't the tool. Every editing control feels like a single considered lever, not a professional editor.
 
 ## 5. Features
 
 ### P0 — must ship in week 1
 
 **Home (`/`)**
-- Inter-typed prompt input, centered, no chrome. Placeholder rotates through curated example prompts every 4 seconds ("a quiet cup of matcha on a rainy morning", "an old man reading by a window", etc.)
-- Empty state below the input: 4 curated example generations from Olusegun's own testing, each showing the image + prompt used. Clicking one populates the input with that prompt for the user to modify.
-- Generation button: single primary action, solid foreground-on-background. Disabled while a generation is in flight.
-- Result surface: fades in below the input when generation completes. Shows the image, the user's prompt, and three actions: [Download], [Copy link], [New generation].
+- Single screen, four-panel layout: a dark controls panel (style switcher, prompt input, Generate button) paired with three light panels — canvas (top-right: the current generation, plus aspect/share/export controls), history log (bottom-left), and edit panel (bottom-right)
+- Prompt input: placeholder rotates through curated example prompts every 4 seconds ("a quiet cup of matcha on a rainy morning", "an old man reading by a window", etc.)
+- Generate button: single primary action, solid foreground-on-background, lives in the dark controls panel. Disabled while a generation is in flight.
+- Canvas empty state (before the first generation of the session): 4 curated example generations from Olusegun's own testing, each showing the image + prompt used. Clicking one populates the prompt input with that prompt. Once a generation exists, the canvas shows the current result instead — past generations live in the history log, not in this empty state.
 
 **Style switcher**
 - Renders a horizontal row of style tiles at the top of the controls panel
@@ -57,12 +58,61 @@ Within 2 weeks of shipping:
 - Each tile shows a small example illustration + style name
 
 **Generation flow**
-- User types → clicks Generate → loading state appears (typewriter status: "mixing the pigments...", "letting it dry...", "adding the shadow...") → image appears with slow fade
-- Backend prepends the locked style prompt to the user's text, optionally attaches a random style reference image from `/public/style-refs/`, calls Nano Banana, uploads result to Supabase Storage, writes generation row, returns slug + URL
+- User types → clicks Generate → loading state appears in the canvas panel (typewriter status: "mixing the pigments...", "letting it dry...", "adding the shadow...") → image appears in the canvas with slow fade
+- Backend prepends the locked style prompt to the user's text, optionally attaches a random style reference image from `/public/style-refs/`, calls Nano Banana, uploads result to Supabase Storage, writes generation row, returns slug + URL + default `editState` (§6, §7)
+- The new generation appears at the top of the history log, newest first
 - Total round-trip target: under 10 seconds
+- There's no separate "New generation" button. Typing a new prompt and clicking Generate again *is* the new-generation action — the previous result isn't lost, it's already sitting in the history log, one click away.
+
+**History log**
+- Bottom-left panel on desktop; bottom-drawer on mobile
+- Shows all generations from the current browser session, newest first
+- Session-only, not persisted per-user (no accounts, no DB history per user) — persists across page reloads via localStorage
+- Each entry: thumbnail (~48px), relative timestamp ("2m ago"), truncated prompt
+- Click entry: loads that generation into the canvas with its saved edit values applied
+- Empty state: "Your history will appear here"
+
+**Post-generation editing**
+- Bottom-right panel on desktop; edit tab or drawer on mobile
+- Six controls modify the currently displayed generation:
+  - Rotate: slider, -180° to +180°, default 0°
+  - Saturation: slider, 0% to 200%, default 100%
+  - Tint: slider, -100 to +100, default 0
+  - Black and white: slider, 0 to 100, default 0 (a "grade," not a switch)
+  - Border colour: 8 swatches + custom picker; default null (no border)
+  - Background colour: 8 swatches + custom picker; default null (transparent)
+- Non-destructive: original generation preserved server-side, edits applied client-side
+  - Rotate + Saturation + Tint + B&W = CSS filters on the preview
+  - Border + Background = composited layer on export (canvas API)
+- Reset button restores all defaults
+- Edit state persists per generation in localStorage during the session
+- On Export or Share, `edit_state` is persisted to the DB row for that generation
+
+**Aspect ratio selector**
+- Top-right of canvas: aspect selector, Share, Export, left to right
+- Functional in v1, not aspirational
+- Options: Square 1:1 (default), Portrait 4:5, Landscape 16:9
+- Changes canvas display AND export dimensions
+- Changing aspect on an existing generation crops the export (center-crop) — doesn't regenerate
+
+**Share button**
+- Top-right of canvas, between the aspect selector and Export
+- Icon: link/chain (lucide-react `Link` or `Share2`)
+- Copies the `/g/[slug]` permalink to the clipboard, shows a toast: "Link copied"
+- Only enabled when a generation exists (disabled/hidden in the empty state, same as Export)
+- Before copying, PATCHes the current `edit_state` to the DB row (same endpoint Export uses, §7) — so the permalink always reflects what's currently on screen, not a stale earlier edit
+
+**Export button**
+- Top-right of canvas, after the aspect selector and Share button
+- Produces the composited edited image as PNG
+- 1024px on the longest edge
+- Filename: `genmage-<slug>.png`
+- Only enabled when a generation exists
+- Also PATCHes the current `edit_state` to the DB row before producing the file (§7) — same reasoning as Share: the permalink should never be stale relative to what was just exported
 
 **Permalink page (`/g/[slug]`)**
 - Single beautiful page showing one generation: image, prompt, "made with Genmage" footer link back to home
+- Renders the generation with its saved `edit_state` applied — filters, border, background, aspect ratio — so what someone sees when they open the link matches what the creator saw when they hit Share or Export, not the raw unedited generation
 - Proper Open Graph meta tags so link previews on iMessage, WhatsApp, X, and Instagram render the image cleanly
 - No comments, no likes, no anything social — just the artifact
 
@@ -115,6 +165,7 @@ generation
   style             text, not null, default 'watercolor' — references style.id
   style_reference   text, filename of the style ref used (e.g. "ref_03.jpg")
   image_url         text, Supabase Storage public URL
+  edit_state        jsonb, nullable — see structure below; written on Export or Share
   ip_hash           text, sha256 of IP + salt — logged now, enforced once per-IP rate limiting ships (see §9)
   featured          boolean, default false, hand-toggled for /gallery
   reported          boolean, default false, for future moderation
@@ -138,11 +189,26 @@ daily_cost
 
 **Seed data:** one `style` row — `id: 'watercolor'`, `name: 'Watercolor'`, `active: true`, `prompt`: *"The illustration style is a loose hand-painted watercolor food sketch with soft transparent washes, organic ink-like outlines, warm natural colors, expressive brush textures, subtle color bleeding, and a light blue-grey shadow on a clean white background."* Style reference images move from `public/style-refs/` to `public/style-refs/watercolor/` — the folder path is now keyed by style id, ready for `public/style-refs/doodle/` etc. later.
 
+**`edit_state` structure:**
+```
+{
+  rotate: number,                    // -180 to 180, default 0
+  saturation: number,                // 0-200, default 100
+  tint: number,                      // -100 to 100, default 0
+  bw: number,                        // 0-100, default 0
+  borderColor: string | null,        // hex or null
+  backgroundColor: string | null,    // hex or null
+  aspectRatio: '1:1' | '4:5' | '16:9' // default '1:1'
+}
+```
+
+Session history is client-side only (localStorage), not in Postgres. Only `edit_state` persists per generation, and only on Export or Share.
+
 Cost cap state lives in Postgres, not a separate KV store — there's no per-IP counter to justify Redis while rate limiting is deferred (see §9).
 
 ## 7. API surface
 
-Four routes. All Next.js Route Handlers, all server-side.
+Five routes. All Next.js Route Handlers, all server-side.
 
 ```
 POST /api/generate
@@ -155,8 +221,21 @@ POST /api/generate
   → uploads image to Supabase Storage,
   → writes generation row (including style),
   → increments today's `daily_cost` row,
-  → returns { slug, imageUrl, prompt, style }
+  → returns { slug, imageUrl, prompt, style, editState }
+    (editState is the default object from §6 — rotate 0, saturation 100, tint 0, bw 0,
+    borderColor null, backgroundColor null, aspectRatio '1:1' — so the client never has
+    to invent defaults itself)
   → errors: 402 (cost cap hit), 500 (generation failed)
+
+PATCH /api/generation/[slug]/edit-state
+  body: { editState: EditState }                  (shape defined in §6)
+  → validates editState against the §6 schema (ranges, enum, hex-or-null),
+  → updates the generation row's edit_state column,
+  → called on Export AND on Share — not on every slider drag. Both actions persist the
+    current edit_state before completing their own thing (file download / clipboard copy),
+    so the permalink is never stale relative to what was last exported or shared
+  → returns { slug, editState }
+  → errors: 400 (invalid editState shape), 404 (slug not found)
 
 GET /api/styles
   → returns active styles: [{ id, name, exampleImageUrl }]
@@ -170,6 +249,9 @@ GET /api/quota
 GET /g/[slug]
   → server-rendered React page (not an API route),
   → fetches generation by slug,
+  → applies the row's `edit_state` (if any) when rendering — filters, border, background,
+    aspect ratio — so the permalink matches what was last exported or shared, not the raw
+    unedited generation,
   → renders with OG tags for social preview
 ```
 
@@ -226,6 +308,10 @@ Full prompt logic lives in `lib/ai/generate-image.ts`, which resolves the style'
 - **Analytics:** Vercel Analytics (usage counts only, no personal data)
 - **Fonts:** `next/font/google` for Inter (weights 400/500/600/700)
 
+**Pending stack decisions (not locked yet):**
+- **Composite export:** `html-to-image` (or investigate `dom-to-image-more` if it turns out better) for rendering the edited canvas — filters, border, background — to a PNG. Choose during Phase E, not now (§11).
+- **Edit state management:** `zustand` or React Context for holding the six-lever edit state client-side. Choose during Phase D, not now (§11).
+
 Deliberately NOT in the stack:
 - Any auth service
 - Any email service
@@ -235,6 +321,8 @@ Deliberately NOT in the stack:
 - Upstash Redis / any KV store — the cost cap lives in Postgres for v1 since rate limiting is deferred (see §9); revisit if per-IP limiting ships and a Postgres row-per-IP-per-day turns out to be the wrong shape
 
 ## 11. Build sequence
+
+**Days 1–4 are complete:** foundation end-to-end (Day 1), style consistency dialed in (Day 2), cost protection (Day 3), design system + multi-style scaffolding (Day 4). What follows is the remaining work, replanned around the dual-tone pivot and the editing system — the original Day 5–7 plan (polish → permalinks → ship) is superseded by Phases D–G below, though permalinks and shipping are still in there, just relocated.
 
 **Day 1 — Foundation, ugly but working end-to-end**
 1. `pnpm create next-app@latest genmage --typescript --tailwind --app`
@@ -270,30 +358,41 @@ Deliberately NOT in the stack:
 25. Redesign `app/page.tsx` with Inter input, rotating placeholder, monochrome layout, style switcher at top of controls panel — **blocked on `GET /api/quota` existing** (§7); the home screen can't render a quota indicator or gracefully show the cost-cap empty state without it
 26. Design result surface with fade-in and three action buttons
 
-**Day 5 — Polish**
-27. Curated empty-state gallery with 4 hand-picked examples
-28. Loading state: typewriter status messages
-29. Micro-interactions: download button feedback, copy-link confirmation
-30. Error states (cost cap, generation failure) with warm copy
-31. Run UI-REVIEW.md against the app
+**Phase D (Days 5–7) — Dark surface pivot + scaffolding, generation flow end-to-end**
+27. Dark-surface tokens (`--surface-dark`, `--foreground-on-dark`) and the green `--accent` token (§ CLAUDE.md Aesthetic non-negotiables); apply dark surface to the controls panel only
+28. History log panel — scaffolded UI (bottom-left desktop / bottom-drawer mobile), reads/writes localStorage, empty state ("Your history will appear here"); click-to-load wired
+29. Edit panel — scaffolded UI (bottom-right desktop / edit tab or drawer mobile), six controls rendered at their defaults, not yet wired to the canvas
+30. Aspect ratio selector — functional: Square 1:1 / Portrait 4:5 / Landscape 16:9, changes canvas display dimensions
+31. Share button — functional: PATCHes the current `edit_state` (§7), copies `/g/[slug]` to the clipboard, "Link copied" toast
+32. Export button — functional but produces the raw (unedited) generation for now; compositing lands in Phase E
+33. Wire the generation flow end-to-end: Generate → canvas shows result → history log records the entry → entry click reloads it
 
-**Day 6 — Permalinks + sharing**
-32. `/g/[slug]` page with server-rendered generation
-33. Open Graph meta tags with the generation image
-34. Test link previews on iMessage, WhatsApp, X, Instagram DM
-35. Add [Copy link] button on result surface
+**Phase E (Days 8–10) — Edit panel wired, composite export**
+34. Rotate wired first (simplest — CSS `transform: rotate()` on the preview)
+35. Saturation, tint, black-and-white wired (CSS `filter` on the preview)
+36. Border colour + background colour swatches and custom picker wired
+37. Reset button restores all six controls to default
+38. `edit_state` persists per generation to localStorage during the session, and to the `generation` row on Export or Share (`PATCH /api/generation/[slug]/edit-state`, §7)
+39. Composite export pipeline: canvas API renders the edited image (filters + border + background) to PNG, 1024px longest edge, `genmage-<slug>.png`
 
-**Day 7 — Ship**
-36. Generate 20 examples for gallery seeding
-37. Lighthouse audit, fix any P0 issues
-38. Deploy to production (custom domain if available)
-39. Send link to 5 friends, watch analytics, note first-day feedback
+**Phase F (Days 11–12) — Mobile adaptation**
+40. Adapt the four-panel desktop layout (controls / canvas / history / edit) for mobile — bottom-sheet drawers for history and edit
+41. Test the full flow on a real device, not just responsive mode in a desktop browser
+
+**Phase G (Days 13–14) — Permalinks, polish, ship**
+42. `/g/[slug]` page with server-rendered generation, carried over from the original plan (not dropped)
+43. Open Graph meta tags with the generation image; test link previews on iMessage, WhatsApp, X, Instagram DM
+44. Motion tuning pass, PWA install manifest
+45. Lighthouse audit, fix any P0 issues; run UI-REVIEW.md against the full four-panel app
+46. Deploy to production, send link to 5 friends, watch first-day feedback
+
+**Estimate:** shipping in 10–14 days from this PRD update.
 
 ## 12. Non-goals for v1 (saying out loud)
 
 - It won't handle prompts in languages other than English gracefully (Nano Banana handles them fine, but the placeholder rotation and error copy are English)
 - It won't stop someone from generating something ugly — the reference-based style gives ~85% consistency; some outputs will miss
-- It won't have undo, versions, or history — each generation is its own permalink and that's the record
+- Session history is not cross-device or cross-browser. Someone who generates on their phone and opens Genmage on their laptop sees an empty history log. This is deliberate — persistent per-user history requires accounts, which we're not building.
 - It won't scale to 10,000 users a day. The $10/day cap makes that impossible by design. If it starts hitting the cap regularly, that's the signal to add real accounts + rate limits per user + probably paid tiers, which is a v2 conversation.
 - It won't stop a single visitor from generating a lot in one sitting — per-IP rate limiting is deferred (§9). The global cost cap still bounds total daily spend at $10, but one person could exhaust a meaningful share of it before anyone else gets a turn. Acceptable risk for a friends-only link; revisit before the link goes any wider.
 
