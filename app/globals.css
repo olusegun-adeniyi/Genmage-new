@@ -1,25 +1,71 @@
+/* Source of truth: design/tokens.ts. Keep in sync. */
+
 @import "tailwindcss";
 
 @theme inline {
-  --color-background: #fafaf9;
-  --color-foreground: #0a0a0a;
-  --color-muted: #f5f5f4;
-  --color-muted-foreground: #737373;
-  --color-border: rgba(0, 0, 0, 0.08);
-  --color-border-hover: rgba(0, 0, 0, 0.12);
-  --color-danger: #b91c1c;
-  --color-input: #e8e4e4;
+  /* Surfaces */
+  --color-background: #fafaf9; /* tokens.colors.pageBackground */
+  --color-surface-dark: #0a0a0a; /* tokens.colors.surfaceDark — not yet used in code (Phase D) */
+  --color-surface-light: #ffffff; /* tokens.colors.surfaceLight — canvas panel */
+  --color-muted: #f5f5f4; /* tokens.colors.surfaceMuted */
 
+  /* Foregrounds */
+  --color-foreground: #0a0a0a; /* tokens.colors.foregroundOnLight */
+  --color-foreground-on-dark: #fafaf9; /* tokens.colors.foregroundOnDark — Phase D */
+  --color-muted-foreground: #737373; /* tokens.colors.mutedForegroundOnLight */
+  --color-muted-foreground-on-dark: #a3a3a3; /* tokens.colors.mutedForegroundOnDark — Phase D */
+
+  /* Borders */
+  --color-border: rgba(0, 0, 0, 0.08); /* tokens.colors.borderOnLight */
+  --color-border-hover: rgba(0, 0, 0, 0.12); /* tokens.colors.borderOnLightHover */
+  --color-border-on-dark: rgba(255, 255, 255, 0.08); /* tokens.colors.borderOnDark — Phase D */
+  --color-border-on-dark-hover: rgba(255, 255, 255, 0.12); /* tokens.colors.borderOnDarkHover — Phase D */
+
+  /* Accent — Export button only. See DESIGN-SYSTEM.md "Never" list. */
+  --color-accent: #16a34a; /* tokens.colors.accent */
+
+  /* Interactive */
+  --color-input: #e8e4e4; /* tokens.colors.inputBackground */
+  --color-slider-track: #e5e5e5; /* tokens.colors.sliderTrack — Phase E */
+  --color-slider-thumb: #0a0a0a; /* tokens.colors.sliderThumb — Phase E */
+
+  /* Danger */
+  --color-danger: #b91c1c; /* tokens.colors.danger */
+
+  /* Radii — md/lg/xl shifted meaning from the previous 3-tier scale. See
+     DESIGN-SYSTEM.md refactor notes if a rounded-* value looks unfamiliar. */
   --radius-sm: 6px;
-  --radius-md: 12px;
-  --radius-lg: 20px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 20px;
+  --radius-full: 9999px;
+
+  /* Semantic spacing — named, meaningful gaps only. Arbitrary spacing (gap-3,
+     p-4, etc.) still comes from Tailwind's own numeric scale. */
+  --spacing-section: 112px; /* major sections inside the controls panel */
+  --spacing-panel: 24px; /* between the four panels on desktop */
+  --spacing-card: 32px; /* inside a card's own internal layout */
+  --spacing-tight: 8px; /* text-to-text within a group */
+  --spacing-page: 24px; /* outer page inset before panel(s) begin */
 
   --font-sans: var(--font-inter);
+
+  /* Tailwind's default type scale (text-xs…text-2xl) already matches
+     tokens.typography.scale exactly (12/14/16/18/20/24px) — no override needed. */
+
+  /* Motion — tokens.motion.easingDefault. Note: this is NOT the same curve as
+     Tailwind's ease-out (cubic-bezier(0,0,0.2,1)), which is what most existing
+     transition-* classes actually use. See DESIGN-SYSTEM.md → Motion for why
+     that's an intentional, documented discrepancy, not a bug. durationDefault
+     (150ms) and durationLong (300ms) are Tailwind's stock duration-150/duration-300 —
+     no token needed. durationImageFade (400ms) has no stock utility; use duration-[400ms].
+  */
+  --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 @layer base {
   * {
-    transition-duration: 150ms;
+    transition-duration: 150ms; /* tokens.motion.durationDefault */
     transition-timing-function: ease-out;
   }
 }

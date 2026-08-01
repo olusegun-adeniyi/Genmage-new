@@ -11,7 +11,7 @@ type CanvasProps = {
 export function Canvas({ children, className }: CanvasProps) {
   return (
     <div
-      className={`relative aspect-square rounded-2xl bg-background ${className ?? ""}`}
+      className={`relative aspect-square rounded-lg bg-surface-light ${className ?? ""}`}
     >
       <CanvasControls />
       {children ?? (

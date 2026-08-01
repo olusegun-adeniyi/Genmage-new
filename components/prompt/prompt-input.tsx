@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 
+import { Button } from "@/components/ui/button";
+
 const PLACEHOLDERS = [
   "a Porsche 911 parked outside a Lisbon café",
   "an old man reading by a window",
@@ -13,8 +15,16 @@ const PLACEHOLDERS = [
 const ROTATE_INTERVAL_MS = 4000;
 const FADE_MS = 300;
 
-export function PromptInput() {
-  const [value, setValue] = useState("");
+type PromptInputProps = {
+  // Gallery-only: seeds the "filled" demo instance. Production always starts empty.
+  initialValue?: string;
+  // Gallery-only: autofocuses the "focused" demo instance so its real focus-within
+  // ring renders for the screenshot, rather than faking the state.
+  autoFocus?: boolean;
+};
+
+export function PromptInput({ initialValue = "", autoFocus = false }: PromptInputProps) {
+  const [value, setValue] = useState(initialValue);
   const [index, setIndex] = useState(0);
   const [fadedIn, setFadedIn] = useState(true);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -42,7 +52,7 @@ export function PromptInput() {
   }
 
   return (
-    <div className="flex min-h-45 flex-col gap-4 rounded-md bg-input p-4">
+    <div className="flex min-h-45 flex-col gap-4 rounded-lg bg-input p-4 transition-shadow duration-150 ease-out focus-within:ring-2 focus-within:ring-foreground/20">
       <div className="relative flex-1">
         <textarea
           ref={textareaRef}
@@ -52,6 +62,7 @@ export function PromptInput() {
           enterKeyHint="go"
           autoComplete="off"
           spellCheck
+          autoFocus={autoFocus}
           className="size-full resize-none border-none bg-transparent text-base text-foreground focus:outline-none focus:ring-0"
         />
         {value === "" && (
@@ -66,12 +77,7 @@ export function PromptInput() {
         )}
       </div>
       <div className="flex justify-end">
-        <button
-          type="button"
-          className="h-11 rounded-full bg-foreground px-5 text-base font-medium text-background transition-[transform,opacity] duration-150 ease-out active:scale-95 active:opacity-80 md:h-10 md:px-6"
-        >
-          Generate
-        </button>
+        <Button variant="primary">Generate</Button>
       </div>
     </div>
   );

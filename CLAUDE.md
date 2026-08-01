@@ -26,23 +26,25 @@ Genmage is a style-locked illustration generator built on a curated multi-style 
 
    After invoking, briefly note in the response which skill(s) were used and what specifically was drawn from them (a pattern, a spacing principle, a state design). This creates accountability and shows the skill was actually applied, not just name-dropped.
 
-3. **Style prompts are sacred.** Each style's locked prompt lives in the `style` table (`style.prompt`), not in application code. Edit it only via a seed migration or directly in Supabase Studio — never from a route handler, never in response to user input. Never let user input override it. Never expose it to the client.
+3. **Before adding any new color, radius, spacing, or motion value, consult `design/tokens.ts` and `DESIGN-SYSTEM.md`.** If the value exists, use the token. If it doesn't, add it to `tokens.ts` first (with usage notes), then use it in the component. Inline hex codes, magic numbers, or ad-hoc spacing values are not permitted in components. Token drift is the fastest way for a design system to become fiction.
 
-4. **Never let user text reach the model without safety.** Prompt goes through Zod validation first (3–200 chars). If Gemini refuses (safety filter), surface the refusal cleanly — never retry with modifications.
+4. **Style prompts are sacred.** Each style's locked prompt lives in the `style` table (`style.prompt`), not in application code. Edit it only via a seed migration or directly in Supabase Studio — never from a route handler, never in response to user input. Never let user input override it. Never expose it to the client.
 
-5. **The cost cap is non-negotiable; per-IP rate limiting is deferred (PRD §9).** Every successful generation increments the Postgres `daily_cost` row for the current UTC date. If the cost-cap check fails at request time, respond 402 before calling the model. No exceptions "for testing". `ip_hash` is still logged on every generation so rate limiting can be added later without a schema change.
+5. **Never let user text reach the model without safety.** Prompt goes through Zod validation first (3–200 chars). If Gemini refuses (safety filter), surface the refusal cleanly — never retry with modifications.
 
-6. **Server components by default.** `'use client'` only where genuinely needed (the prompt form, the copy-link button, the download button). If you're adding `'use client'`, write a one-line comment explaining why.
+6. **The cost cap is non-negotiable; per-IP rate limiting is deferred (PRD §9).** Every successful generation increments the Postgres `daily_cost` row for the current UTC date. If the cost-cap check fails at request time, respond 402 before calling the model. No exceptions "for testing". `ip_hash` is still logged on every generation so rate limiting can be added later without a schema change.
 
-7. **Follow the folder structure.** Queries in `lib/db/queries/`. AI logic in `lib/ai/`. No Supabase client imports in components — go through the query layer.
+7. **Server components by default.** `'use client'` only where genuinely needed (the prompt form, the copy-link button, the download button). If you're adding `'use client'`, write a one-line comment explaining why.
 
-8. **Validation at every boundary.** Zod for API inputs, Gemini SDK responses, generation row inserts. No `any`. No `as any`. No `@ts-ignore`.
+8. **Follow the folder structure.** Queries in `lib/db/queries/`. AI logic in `lib/ai/`. No Supabase client imports in components — go through the query layer.
 
-9. **Small scope is a feature.** Don't add pagination to the gallery. Don't add user accounts. Don't add "share to Twitter" buttons — the copy-link + OG tags handle that. Don't add analytics events beyond what Vercel Analytics already tracks.
+9. **Validation at every boundary.** Zod for API inputs, Gemini SDK responses, generation row inserts. No `any`. No `as any`. No `@ts-ignore`.
 
-10. **The permalink is a first-class page.** `/g/[slug]` should be as beautifully designed as `/`. It's the version most people will see, because they arrive via shared links.
+10. **Small scope is a feature.** Don't add pagination to the gallery. Don't add user accounts. Don't add "share to Twitter" buttons — the copy-link + OG tags handle that. Don't add analytics events beyond what Vercel Analytics already tracks.
 
-11. **When Gemini is slow, tell the user.** Loading state uses the typewriter status messages defined in the PRD. No generic spinner. Silence during a 10-second wait is a UX failure.
+11. **The permalink is a first-class page.** `/g/[slug]` should be as beautifully designed as `/`. It's the version most people will see, because they arrive via shared links.
+
+12. **When Gemini is slow, tell the user.** Loading state uses the typewriter status messages defined in the PRD. No generic spinner. Silence during a 10-second wait is a UX failure.
 
 ## What "good code" looks like here
 
@@ -57,7 +59,7 @@ Genmage is a style-locked illustration generator built on a curated multi-style 
 - Anything that imports `@supabase/supabase-js` into a component
 - Anything that adds a new dependency without checking the locked stack
 - Anything that uses `any`, `as any`, or `@ts-ignore`
-- Anything that hardcodes a color, radius, or spacing outside of `globals.css` tokens
+- Anything that hardcodes a color, radius, spacing, or motion value outside of `design/tokens.ts` / `globals.css`
 - Anything that adds a settings UI, user accounts, or "advanced options"
 - Anything that reaches for tRPC, GraphQL, or an RPC layer — REST is fine for 4 routes
 - Anything that uses moment.js or dayjs (use `date-fns` if needed, but likely you don't)
@@ -72,7 +74,7 @@ Genmage is a style-locked illustration generator built on a curated multi-style 
 - Inter for everything — headings, body, UI, slugs, URLs, quota indicators. No serif, no separate mono. `font-feature-settings: "cv11" 1, "ss01" 1` on the body (single-story 'a', open digits).
 - Tabular numerals (`font-variant-numeric: tabular-nums`) wherever digits appear, so they don't shift width.
 - 1px borders in `rgba(0, 0, 0, 0.08)`, hover state `rgba(0, 0, 0, 0.12)` — light surfaces. The dark surface needs its own border treatment (likely `rgba(255, 255, 255, *)`); not yet specified, define alongside the other dark tokens in Phase D.
-- Radius scale: `rounded-sm` (6px), `rounded-md` (12px), `rounded-lg` (20px).
+- Radius scale (`design/tokens.ts` → `radii`): `rounded-sm` (6px, smallest interactive elements), `rounded-md` (8px, style tiles / sample cards), `rounded-lg` (12px, cards — outer panels, canvas), `rounded-xl` (20px, reserved), `rounded-full` (pills). This is a 5-tier scale, not the earlier 3-tier one — see `DESIGN-SYSTEM.md` for the full mapping.
 - Fast, precise motion: `transition duration-150 ease-out` is the default. This is deliberately snappy, not editorial-slow.
 - The generation fade-in is still the one deliberate "delight" moment (currently 600ms, ease-out) — worth revisiting the exact number once the result surface is actually built, but it should read as a deliberate pause against the otherwise-fast system, not another 150ms transition.
 
