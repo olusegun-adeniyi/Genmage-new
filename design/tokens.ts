@@ -4,137 +4,153 @@
  * app/globals.css mirrors this file as CSS custom properties (Tailwind v4
  * @theme block) so components consume it via Tailwind classes, not by
  * importing this file directly. This file exists for (a) documentation,
- * (b) any JS/TS logic that needs a raw token value — canvas compositing,
- * slider min/max/default, swatch hex arrays — not just CSS classes.
+ * (b) any JS/TS logic that needs a raw token value (slider geometry, preview
+ * overlay colours), and (c) the /design-system gallery, which renders from it.
  *
- * Some tokens below (surfaceDark, accent, sliderTrack/Thumb, layout.fourPanelDesktopGrid)
- * aren't used by any component yet — Phase D hasn't built the dark controls
- * panel, history log, or edit panel. They're infrastructure for that work,
- * not retrofitted onto components that don't exist. See DESIGN-SYSTEM.md.
+ * Source: design_handoff_illustration_studio/README.md (high-fidelity), then
+ * scaled down ~20% on 2026-10-08 (Olusegun: "all in your face") so the studio
+ * fits a laptop viewport without scrolling. Palette and proportions are the
+ * handoff's; sizes are the scaled ones below.
  */
 
 export const colors = {
-  // Surfaces
-  pageBackground: "#fafaf9", // whole-page background, outside all panels
-  surfaceDark: "#0a0a0a", // controls panel — not yet applied in code (Phase D)
-  surfaceLight: "#ffffff", // canvas panel — pure white, deliberately distinct from pageBackground
-  surfaceMuted: "#f5f5f4", // history + edit panels; lighter than page, warmer than canvas
+  // Surfaces, lightest → darkest
+  page: "#f5f5f5", // off-white page surface behind the panels, under the dot grid
+  pageDot: "#dcdcdc", // dot-grid dots — kept low contrast so the white panels stay the figure
+  background: "#ffffff", // panels, toolbar buttons, recent list
+  canvas: "#ffffff", // canvas panel — white, bordered like the other panels (was #fafafa)
+  field: "#f6f6f6", // prompt box, sliders, colour rows, hover/selected list + menu items
+  toolbar: "#f0f0f0", // canvas action bar
+  border: "#eaeaea", // panel borders, hairlines, toolbar button hover
+  divider: "#e6e6e6", // adjustments divider, disabled primary button
+  tick: "#d0d0d0", // slider tick dots, slider focus ring
 
-  // Foregrounds
-  foregroundOnLight: "#0a0a0a", // text/icons on pageBackground, surfaceLight, surfaceMuted
-  foregroundOnDark: "#fafaf9", // text/icons on surfaceDark — not yet applied in code (Phase D)
-  mutedForegroundOnLight: "#737373", // secondary text on light surfaces (labels, captions, timestamps)
-  mutedForegroundOnDark: "#a3a3a3", // secondary text on surfaceDark — not yet applied in code (Phase D)
+  // Foregrounds, lightest → darkest
+  emptyIcon: "#6b6b6b", // empty-state icons (canvas, recent list) — a step darker than their muted caption
+  disabledForeground: "#939393", // disabled primary button label
+  mutedForeground: "#8b8b8b", // secondary text, placeholders, slider + colour row labels
+  sliderFill: "#5a5a5a", // slider fill
+  foregroundSoft: "#2b2b2b", // input text, slider values, empty thumbnail
+  foreground: "#181818", // primary text, style tiles, tile selection ring
+  foregroundStrong: "#000000", // section labels
 
-  // Borders
-  borderOnLight: "rgba(0, 0, 0, 0.08)", // hairline borders on light surfaces
-  borderOnLightHover: "rgba(0, 0, 0, 0.12)",
-  borderOnDark: "rgba(255, 255, 255, 0.08)", // hairline borders on surfaceDark — Phase D
-  borderOnDarkHover: "rgba(255, 255, 255, 0.12)",
+  // Primary — the active Generate button. Exclusively. Export is deliberately a
+  // plain toolbar button in the handoff; don't spread this colour to it.
+  primary: "#6600ff",
+  primaryForeground: "#ffffff",
 
-  // Accent — Frontend Design Skill: "spend your boldness in one place." Reserved
-  // exclusively for the Export button. Never a starting palette to expand from.
-  accent: "#16a34a",
+  danger: "#b91c1c", // error states
 
-  // Interactive
-  inputBackground: "#e8e4e4", // prompt input specifically — not a reuse of surfaceMuted, its own semantic slot
-  // Sliders (Rotate/Saturation/Tint/B&W, §Post-generation editing) stay neutral —
-  // Frontend Design Skill's restraint principle rules out spending the reserved
-  // accent color here. Thumb reuses foregroundOnLight's exact value rather than
-  // inventing a second "interactive" color.
-  sliderTrack: "#e5e5e5", // inactive track — visible against surfaceMuted without competing
-  sliderThumb: "#0a0a0a", // same value as foregroundOnLight, named separately for call-site clarity
-
-  // Danger
-  danger: "#b91c1c", // destructive/error states — subtle, reads as intentional not alarming
+  // Live-preview overlays for the Adjustments panel (soft-light blended over the
+  // illustration). Not UI colours — never use them on chrome.
+  editWarm: "#ff8a00", // Temperature
+  editTint: "#ff2d9b", // Tint (magenta axis, as in photo-editing "tint")
+  editHighlight: "#ffffff", // Highlight
 } as const;
 
 export const radii = {
-  sm: "6px", // smallest interactive elements; not yet used by any built component
-  md: "8px", // style tiles, sample image cards (formalizes the Phase C tuning pass's rounded-[8px])
-  lg: "12px", // cards — the outer panel containers, canvas panel
-  xl: "20px", // reserved for a larger container tier if one shows up; none currently
-  full: "9999px", // pill buttons — Generate, Export, Aspect selector, icon buttons
+  // One step smaller than the handoff (8/10/12/16/20/24) to match the scaled sizes.
+  xs: "6px", // style tile thumbnail
+  sm: "8px", // recent list items, menu items
+  md: "10px", // buttons, sliders, style tiles, colour rows
+  lg: "14px", // prompt box, action bar, aspect menu
+  xl: "16px", // reserved
+  "2xl": "20px", // the three panels, canvas
+  full: "9999px", // colour swatches, slider tick dots
+} as const;
+
+export const shadows = {
+  grid: "inset 0 0 0 1px #eaeaea", // inset 1px outline that adds no size — gallery swatches/tables only now (style grid and recent list are outline-free)
+  tileSelected: "0 0 0 2px #ffffff, 0 0 0 4px #181818", // 2px white gap, then a 2px ink ring
+  menu: "inset 0 0 0 1px #eaeaea, 0 8px 24px rgba(24, 24, 24, 0.08)", // the only real shadow in the system
+  swatch: "inset 0 0 0 1px rgba(0, 0, 0, 0.06)", // keeps a white/near-white swatch visible
+  fieldFocus: "inset 0 0 0 1px #d0d0d0", // focus on grey fields — slider, prompt box
 } as const;
 
 export const spacing = {
-  // Semantic constants only — arbitrary/numeric spacing (gap-3, p-4, etc.) still
-  // comes from Tailwind's own scale. These are the named, meaningful ones.
-  sectionGap: "112px", // major sections inside the controls panel (style switcher / prompt / samples)
-  panelGap: "24px", // between the four panels on desktop (controls/canvas/history/edit)
-  cardGap: "32px", // spacing inside a card's own internal layout
-  tightGap: "8px", // text-to-text within a group (label to value, caption below thumbnail)
-  pagePadding: "24px", // outer page inset before the panel(s) begin
+  // Named layout dimensions only — everything that lands on Tailwind's 4px scale
+  // (gap-2, p-3.5, h-8, top-2.5…) uses that scale directly.
+  // ≥ lg the layout is fluid: a 20px margin on every side (p-5), a 20px gap
+  // (gap-5), the left column at 20% (layout.studioColumns), canvas filling the
+  // rest. No max width/height — the margin stays equal at every screen size.
+  leftColumnMin: "256px", // floor for the 20% left column — below ~1300px wide, 20% would squeeze the style tiles to ~50px
+  adjustmentsPanel: "280px", // Adjustments panel width, floating inside the canvas at lg
 
-  // Slider-specific (ui-ux-pro-max: 44x44px minimum touch target; visual track/thumb
-  // can be smaller than the tappable hit area).
-  sliderTrackHeight: "4px", // thin, precise — reads as an instrument, not a toy
-  sliderThumbSize: "16px", // visual diameter
-  sliderThumbHitArea: "44px", // minimum tappable area around the thumb, per touch-target guidance
-  sliderLabelGap: "8px", // label-to-track distance — reuses tightGap's value
+  tileThumb: "39px", // style tile thumbnail height (60px tile − 20px caption − 1px gap)
+  promptBox: "88px",
+
+  actionBarWidth: "288px",
+  shareButton: "78px",
+  exportButton: "82px",
+
+  // Inside the canvas (≥ lg) everything keeps a 16px padding from its edge.
+  // The illustration area sits left of the Adjustments panel (so the panel never
+  // covers the artwork) and above the action bar.
+  canvasImageTop: "calc(16px + 40px + 16px)", // padding + 40px theme toggle + gap
+  canvasImageTopCompact: "calc(12px + 40px + 12px)", // stacked
+  canvasImageRight: "calc(16px + 280px + 16px)", // padding + Adjustments panel + gap
+  canvasImageBottom: "calc(16px + 48px + 16px)", // padding + 48px action bar + gap
+  canvasImageBottomCompact: "calc(12px + 48px + 12px)", // stacked
 } as const;
 
 export const typography = {
-  family: "Inter, system-ui, -apple-system, BlinkMacSystemFont, sans-serif",
+  family: "'SF Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', sans-serif",
+  // One style for the entire product. Hierarchy comes from colour
+  // (foregroundStrong → foreground → mutedForeground), never size or weight.
+  // Exception: the prompt textarea is 16px on touch screens (iOS focus zoom).
+  size: "13px",
+  lineHeight: "18px",
+  weight: 400,
+} as const;
 
-  scale: {
-    xs: "12px", // labels, timestamps
-    sm: "14px", // body, buttons, wordmark
-    base: "16px", // prompt input — the floor for iOS to not auto-zoom on focus
-    lg: "18px",
-    xl: "20px",
-    "2xl": "24px",
-  },
-
-  weight: {
-    normal: 400, // body
-    medium: 500, // UI elements, wordmark
-    semibold: 600, // emphasis
-  },
-
-  lineHeight: {
-    tight: 1.2,
-    normal: 1.5,
-    relaxed: 1.7,
-  },
-
-  tracking: {
-    default: "0",
-    tight: "-0.01em", // wordmark
-    wide: "0.02em", // labels, anything set in uppercase
+export const patterns = {
+  // Page dot grid: a repeating radial gradient on `page`, one `pageDot` dot per cell.
+  // 1px solid core with a half-pixel soft edge so dots render round, not square.
+  dotGrid: {
+    cellSize: "24px",
+    dotRadius: "1px",
+    dotFade: "1.5px",
   },
 } as const;
 
 export const motion = {
-  durationDefault: "150ms", // the system default — snap, not float
-  durationLong: "300ms", // placeholder rotation fade, anything that needs to read as deliberate
-  durationImageFade: "400ms", // generation reveal — not yet implemented, no generation flow wired up
-  easingDefault: "cubic-bezier(0.4, 0, 0.2, 1)", // Material's "standard" curve; loosely "ease-out" in feel
+  durationDefault: "150ms", // every hover/selection/state change
+  durationLabel: "120ms", // slider label flipping light/dark as the fill passes under it
+  durationImageFade: "400ms", // generation reveal — the one deliberate pause
+  easingDefault: "ease-out",
+} as const;
+
+export const slider = {
+  // Fill width = fillMin + pct × (trackWidth − fillMin): a 10px stub stays visible
+  // at value=min so the handle never disappears.
+  fillMin: 10,
+  // The label flips to light once the fill reaches (labelWidth − this) px.
+  labelFlipOffset: 6,
+  // Below this fraction the handle hugs the stub's edge (4px) instead of 10px.
+  handleHugThreshold: 0.02,
+  // Touch only: a drag must travel this far horizontally (and more horizontally
+  // than vertically) before the slider takes it — otherwise it's a page scroll.
+  dragThreshold: 6,
+  // The value sits 16px (px-4) from the right edge — 16 not 12, so the handle
+  // (10px in from the fill's edge) never touches the label or value text. Not in the handoff: it never
+  // showed a near-max fill, where #2B2B2B on the #5A5A5A fill is unreadable, so
+  // the value flips light by the same rule as the label.
+  valueInset: 16,
 } as const;
 
 export const layout = {
-  breakpointMobile: 0,
-  breakpointDesktop: 768, // matches Tailwind's `md:` — already in use throughout
-
-  // min-h-dvh over min-h-screen/h-screen: 100vh is unreliable on mobile browsers
-  // whose chrome shows/hides on scroll. dvh accounts for that; already in use.
-  mobileViewportHeightNote:
-    "Use min-h-dvh, never h-screen. min-height (not a hard height) so content can never be clipped — page scrolls instead.",
-
-  safeAreaNote:
-    "No fixed-position elements currently exist in the built UI, so no safe-area-inset padding is applied yet. If a bottom-sheet drawer (Phase F, mobile history/edit) or a fixed action bar returns, it needs pb-[env(safe-area-inset-bottom)].",
-
-  // Phase D target — NOT implemented in app/page.tsx yet. Current desktop build
-  // is a two-column grid (controls 36% / canvas 1fr), no history or edit panel.
-  fourPanelDesktopGrid: {
-    gridTemplateColumns: "36% 1fr",
-    gridTemplateAreas: `"controls canvas" "history edit"`,
-    note: "Controls (dark) and history (muted) share the left 36% column; canvas (light) and edit (muted) share the right 1fr column.",
-  },
+  // ≥ lg: three columns filling the viewport (no page scroll). Below: one stacked
+  // column (Generate → Canvas → Adjustments), max-w-xl, canvas 4:5 / 1:1 (sm+).
+  breakpointDesktop: 1024, // Tailwind `lg:`
+  // Two sections: left (Generate + Recently generated) and the canvas, which
+  // hosts the Adjustments panel in its top-right corner.
+  // minmax(floor, 20%): exactly 20% once that's wider than the floor (≳1300px
+  // screens); below that the left column holds at 256px.
+  studioColumns: "minmax(var(--spacing-left-column-min), 20%) minmax(0, 1fr)",
+  heightRule:
+    "lg only: the row is the viewport height minus the 20px margins. Left column and canvas fill it; Adjustments hugs its content at the canvas's top-right. On a too-short viewport, Adjustments and the recent list scroll internally — never the page.",
 } as const;
 
 export type ColorToken = keyof typeof colors;
 export type RadiusToken = keyof typeof radii;
 export type SpacingToken = keyof typeof spacing;
-export type FontSizeToken = keyof typeof typography.scale;
-export type FontWeightToken = keyof typeof typography.weight;

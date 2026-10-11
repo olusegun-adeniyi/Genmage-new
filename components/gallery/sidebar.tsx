@@ -22,20 +22,14 @@ const NAV: NavGroup[] = [
     id: "components",
     label: "Components",
     children: [
-      { id: "components-wordmark", label: "Wordmark" },
       { id: "components-style-tile", label: "Style tile" },
-      { id: "components-sample-card", label: "Sample image card" },
-      { id: "components-prompt-input", label: "Prompt input" },
+      { id: "components-generate", label: "Prompt box & recent list" },
       { id: "components-buttons", label: "Buttons" },
-      { id: "components-canvas", label: "Canvas" },
-      { id: "components-slider", label: "Slider" },
-      { id: "components-swatch-picker", label: "Color swatch picker" },
-      { id: "components-history-entry", label: "History log entry" },
+      { id: "components-action-bar", label: "Canvas action bar" },
+      { id: "components-slider", label: "Slider & colour row" },
       { id: "components-toast", label: "Toast notification" },
-      { id: "components-panels", label: "Panels" },
     ],
   },
-  { id: "layout-patterns", label: "Layout patterns" },
   { id: "rules", label: "Rules" },
 ];
 
@@ -73,35 +67,34 @@ export function GallerySidebar() {
 
   return (
     <>
-      {/* Desktop: sticky nested tree, dark surface — the only place in the product
-          today that actually renders the still-unbuilt dark controls-panel tokens. */}
+      {/* Desktop: sticky nested tree. */}
       <nav
         aria-label="Design system sections"
-        className="sticky top-0 hidden h-dvh w-64 shrink-0 flex-col gap-1 overflow-y-auto border-r border-border-on-dark bg-surface-dark px-5 py-8 md:flex"
+        className="sticky top-0 hidden h-dvh w-64 shrink-0 flex-col gap-1 overflow-y-auto border-r border-border bg-background px-5 py-8 md:flex"
       >
-        <p className="mb-4 text-sm font-medium tracking-tight text-foreground-on-dark">genmage · design system</p>
+        <p className="mb-4 text-foreground-strong">genmage · design system</p>
         {NAV.map((group) => (
           <div key={group.id} className="mb-3">
             <a
               href={`#${group.id}`}
               className={`block rounded-sm px-2 py-1 text-sm transition-colors duration-150 ease-out ${
                 isGroupActive(group, activeId)
-                  ? "text-foreground-on-dark"
-                  : "text-muted-foreground-on-dark hover:text-foreground-on-dark"
+                  ? "text-foreground-strong"
+                  : "text-muted-foreground hover:text-foreground-strong"
               }`}
             >
               {group.label}
             </a>
             {group.children && (
-              <div className="mt-1 ml-2 flex flex-col gap-0.5 border-l border-border-on-dark pl-3">
+              <div className="mt-1 ml-2 flex flex-col gap-0.5 border-l border-border pl-3">
                 {group.children.map((item) => (
                   <a
                     key={item.id}
                     href={`#${item.id}`}
                     className={`rounded-sm px-2 py-1 text-xs transition-colors duration-150 ease-out ${
                       activeId === item.id
-                        ? "text-foreground-on-dark"
-                        : "text-muted-foreground-on-dark hover:text-foreground-on-dark"
+                        ? "text-foreground-strong"
+                        : "text-muted-foreground hover:text-foreground-strong"
                     }`}
                   >
                     {item.label}
@@ -117,7 +110,7 @@ export function GallerySidebar() {
           by scrolling the page itself, not worth a second navigation layer at this width. */}
       <nav
         aria-label="Design system sections"
-        className="scrollbar-hide sticky top-0 z-10 flex gap-2 overflow-x-auto border-b border-border-on-dark bg-surface-dark px-4 py-3 md:hidden"
+        className="sticky top-0 z-10 flex gap-2 overflow-x-auto border-b border-border bg-background px-4 py-3 md:hidden"
       >
         {NAV.map((group) => (
           <a
@@ -125,8 +118,8 @@ export function GallerySidebar() {
             href={`#${group.id}`}
             className={`shrink-0 rounded-full border px-3 py-1.5 text-xs whitespace-nowrap transition-colors duration-150 ease-out ${
               isGroupActive(group, activeId)
-                ? "border-border-on-dark-hover text-foreground-on-dark"
-                : "border-border-on-dark text-muted-foreground-on-dark"
+                ? "border-tick text-foreground-strong"
+                : "border-border text-muted-foreground"
             }`}
           >
             {group.label}

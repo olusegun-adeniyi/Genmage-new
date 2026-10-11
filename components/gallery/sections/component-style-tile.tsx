@@ -1,30 +1,30 @@
 import { StyleTile } from "@/components/prompt/style-tile";
-import { SectionHeading } from "@/components/gallery/primitives";
+import { StyleGridDemo } from "@/components/gallery/live-demos";
+import { SectionHeading, Subsection } from "@/components/gallery/primitives";
 
-const INSTANCES = [
-  { label: "Default", props: { selected: false } },
-  { label: "Selected", props: { selected: true } },
-  { label: "Hover", props: { selected: false, demoState: "hover" as const } },
-  { label: "Disabled", props: { selected: false, disabled: true } },
-];
+const THUMB = "/examples/style-tile-watercolor.jpg";
 
 export function ComponentStyleTileSection() {
   return (
-    <section className="flex flex-col gap-6">
+    <section className="flex flex-col gap-8">
       <SectionHeading
         id="components-style-tile"
         title="Style tile"
-        description={`Disabled isn't a real v1 scenario — DESIGN-SYSTEM.md notes inactive styles simply aren't shown, never disabled. Shown here as a visual mock for completeness.`}
+        description="Ink tile, 39px thumbnail, white caption. Selected gets a white gap and ink ring; unselected sits at 88% opacity. Coming-soon tiles stay focusable (aria-disabled) at 40%."
         status="live"
       />
-      <div className="grid grid-cols-2 gap-6 sm:grid-cols-4">
-        {INSTANCES.map((instance) => (
-          <div key={instance.label} className="flex flex-col items-center gap-2">
-            <StyleTile name="Watercolor" imageSrc="/examples/example_01.png" {...instance.props} />
-            <p className="text-xs text-muted-foreground">{instance.label}</p>
-          </div>
-        ))}
-      </div>
+      <Subsection label="States">
+        <div className="grid w-80 grid-cols-3 gap-2 p-2">
+          <StyleTile name="Watercolor" imageSrc={THUMB} selected />
+          <StyleTile name="Watercolor" imageSrc={THUMB} selected={false} />
+          <StyleTile name="Doodle" selected={false} comingSoon />
+        </div>
+      </Subsection>
+      <Subsection label="Style grid" note="Live — active styles from the style table, padded to six with coming-soon tiles">
+        <div className="w-80 px-3.5">
+          <StyleGridDemo />
+        </div>
+      </Subsection>
     </section>
   );
 }

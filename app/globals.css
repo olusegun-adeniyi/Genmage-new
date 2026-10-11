@@ -3,64 +3,87 @@
 @import "tailwindcss";
 
 @theme inline {
-  /* Surfaces */
-  --color-background: #fafaf9; /* tokens.colors.pageBackground */
-  --color-surface-dark: #0a0a0a; /* tokens.colors.surfaceDark — not yet used in code (Phase D) */
-  --color-surface-light: #ffffff; /* tokens.colors.surfaceLight — canvas panel */
-  --color-muted: #f5f5f4; /* tokens.colors.surfaceMuted */
+  /* Surfaces — tokens.colors */
+  --color-page: #f5f5f5;
+  --color-page-dot: #dcdcdc;
+  --color-background: #ffffff;
+  --color-canvas: #ffffff;
+  --color-field: #f6f6f6;
+  --color-toolbar: #f0f0f0;
+  --color-border: #eaeaea;
+  --color-divider: #e6e6e6;
+  --color-tick: #d0d0d0;
 
   /* Foregrounds */
-  --color-foreground: #0a0a0a; /* tokens.colors.foregroundOnLight */
-  --color-foreground-on-dark: #fafaf9; /* tokens.colors.foregroundOnDark — Phase D */
-  --color-muted-foreground: #737373; /* tokens.colors.mutedForegroundOnLight */
-  --color-muted-foreground-on-dark: #a3a3a3; /* tokens.colors.mutedForegroundOnDark — Phase D */
+  --color-empty-icon: #6b6b6b;
+  --color-disabled-foreground: #939393;
+  --color-muted-foreground: #8b8b8b;
+  --color-slider-fill: #5a5a5a;
+  --color-foreground-soft: #2b2b2b;
+  --color-foreground: #181818;
+  --color-foreground-strong: #000000;
 
-  /* Borders */
-  --color-border: rgba(0, 0, 0, 0.08); /* tokens.colors.borderOnLight */
-  --color-border-hover: rgba(0, 0, 0, 0.12); /* tokens.colors.borderOnLightHover */
-  --color-border-on-dark: rgba(255, 255, 255, 0.08); /* tokens.colors.borderOnDark — Phase D */
-  --color-border-on-dark-hover: rgba(255, 255, 255, 0.12); /* tokens.colors.borderOnDarkHover — Phase D */
+  /* Primary — active Generate button only. See tokens.colors.primary. */
+  --color-primary: #6600ff;
+  --color-primary-foreground: #ffffff;
 
-  /* Accent — Export button only. See DESIGN-SYSTEM.md "Never" list. */
-  --color-accent: #16a34a; /* tokens.colors.accent */
+  --color-danger: #b91c1c;
 
-  /* Interactive */
-  --color-input: #e8e4e4; /* tokens.colors.inputBackground */
-  --color-slider-track: #e5e5e5; /* tokens.colors.sliderTrack — Phase E */
-  --color-slider-thumb: #0a0a0a; /* tokens.colors.sliderThumb — Phase E */
+  /* Live-preview overlays — illustration only, never chrome. */
+  --color-edit-warm: #ff8a00;
+  --color-edit-tint: #ff2d9b;
+  --color-edit-highlight: #ffffff;
 
-  /* Danger */
-  --color-danger: #b91c1c; /* tokens.colors.danger */
-
-  /* Radii — md/lg/xl shifted meaning from the previous 3-tier scale. See
-     DESIGN-SYSTEM.md refactor notes if a rounded-* value looks unfamiliar. */
-  --radius-sm: 6px;
-  --radius-md: 8px;
-  --radius-lg: 12px;
-  --radius-xl: 20px;
+  /* Radii — tokens.radii */
+  --radius-xs: 6px;
+  --radius-sm: 8px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 16px;
+  --radius-2xl: 20px;
   --radius-full: 9999px;
 
-  /* Semantic spacing — named, meaningful gaps only. Arbitrary spacing (gap-3,
-     p-4, etc.) still comes from Tailwind's own numeric scale. */
-  --spacing-section: 112px; /* major sections inside the controls panel */
-  --spacing-panel: 24px; /* between the four panels on desktop */
-  --spacing-card: 32px; /* inside a card's own internal layout */
-  --spacing-tight: 8px; /* text-to-text within a group */
-  --spacing-page: 24px; /* outer page inset before panel(s) begin */
+  /* Shadows — tokens.shadows */
+  --shadow-grid: inset 0 0 0 1px #eaeaea;
+  --shadow-tile-selected: 0 0 0 2px #ffffff, 0 0 0 4px #181818;
+  --shadow-menu: inset 0 0 0 1px #eaeaea, 0 8px 24px rgba(24, 24, 24, 0.08);
+  --shadow-swatch: inset 0 0 0 1px rgba(0, 0, 0, 0.06);
+  --shadow-field-focus: inset 0 0 0 1px #d0d0d0;
 
-  --font-sans: var(--font-inter);
+  /* Named layout dimensions — tokens.spacing. Everything else uses Tailwind's
+     own 4px scale (gap-2, p-3.5, h-8…). */
+  --spacing-left-column-min: 256px;
+  --spacing-adjustments-panel: 280px;
+  --spacing-tile-thumb: 39px;
+  --spacing-prompt-box: 88px;
+  --spacing-action-bar-width: 288px;
+  --spacing-share-button: 78px;
+  --spacing-export-button: 82px;
+  --spacing-canvas-image-top: calc(16px + 40px + 16px);
+  --spacing-canvas-image-top-compact: calc(12px + 40px + 12px);
+  --spacing-canvas-image-right: calc(16px + 280px + 16px);
+  --spacing-canvas-image-bottom: calc(16px + 48px + 16px);
+  --spacing-canvas-image-bottom-compact: calc(12px + 48px + 12px);
 
-  /* Tailwind's default type scale (text-xs…text-2xl) already matches
-     tokens.typography.scale exactly (12/14/16/18/20/24px) — no override needed. */
 
-  /* Motion — tokens.motion.easingDefault. Note: this is NOT the same curve as
-     Tailwind's ease-out (cubic-bezier(0,0,0.2,1)), which is what most existing
-     transition-* classes actually use. See DESIGN-SYSTEM.md → Motion for why
-     that's an intentional, documented discrepancy, not a bug. durationDefault
-     (150ms) and durationLong (300ms) are Tailwind's stock duration-150/duration-300 —
-     no token needed. durationImageFade (400ms) has no stock utility; use duration-[400ms].
-  */
-  --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+  /* Typography — tokens.typography. One style for everything: 13/18, 400. */
+  --text-ui: 13px;
+  --text-ui--line-height: 18px;
+  --font-sans: "SF Pro", -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", sans-serif;
+}
+
+:root {
+  /* tokens.patterns.dotGrid — plain vars (not @theme) so the utility below can
+     read them at runtime. */
+  --dot-grid-color: #dcdcdc;
+  --dot-grid-cell: 24px;
+  --dot-grid-radius: 1px;
+  --dot-grid-fade: 1.5px;
+
+  /* tokens.layout.studioColumns — consumed as grid-cols-(--studio-columns) /
+   grid-rows-(--studio-rows). */
+  --studio-columns: minmax(var(--spacing-left-column-min), 20%) minmax(0, 1fr);
+  --studio-rows: minmax(0, 1fr);
 }
 
 @layer base {
@@ -68,20 +91,45 @@
     transition-duration: 150ms; /* tokens.motion.durationDefault */
     transition-timing-function: ease-out;
   }
+
+  textarea::placeholder {
+    color: var(--color-muted-foreground);
+  }
 }
 
 body {
-  @apply font-sans antialiased font-normal text-base leading-relaxed text-foreground bg-background;
-  font-feature-settings: "cv11" 1, "ss01" 1;
+  @apply bg-dot-grid font-sans text-ui font-normal text-foreground antialiased;
   font-variant-numeric: tabular-nums;
 }
 
-/* No built-in Tailwind utility for this — hides the scrollbar on the sample-images row while keeping it scrollable. */
-.scrollbar-hide {
-  scrollbar-width: none;
-  -ms-overflow-style: none;
+/* Page surface: off-white with a low-contrast dot every 24px (tokens.patterns.dotGrid).
+   Panels are opaque white, so the grid only shows in the gutters around them. */
+@utility bg-dot-grid {
+  background-color: var(--color-page);
+  background-image: radial-gradient(
+    circle at center,
+    var(--dot-grid-color) var(--dot-grid-radius),
+    transparent var(--dot-grid-fade)
+  );
+  background-size: var(--dot-grid-cell) var(--dot-grid-cell);
 }
 
-.scrollbar-hide::-webkit-scrollbar {
-  display: none;
+/* Fit an aspect-ratio box inside its parent on both axes (object-fit: contain,
+   for elements). The parent is a size container; the child sets --ratio. */
+@utility fit-container {
+  container-type: size;
+}
+
+@utility aspect-fit {
+  aspect-ratio: var(--ratio);
+  width: min(100cqw, 100cqh * var(--ratio));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0ms !important;
+    animation-duration: 0ms !important;
+  }
 }

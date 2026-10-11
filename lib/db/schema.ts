@@ -1,4 +1,6 @@
-import { boolean, date, index, numeric, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
+import { boolean, date, index, jsonb, numeric, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
+
+import type { EditState } from "@/lib/validation/edit-state";
 
 export const style = pgTable("style", {
   id: text("id").primaryKey(),
@@ -24,6 +26,9 @@ export const generation = pgTable(
       .references(() => style.id),
     styleReference: text("style_reference").notNull(),
     imageUrl: text("image_url").notNull(),
+    // Nullable — written only on Export or Share (§ PRD Post-generation editing). A
+    // fresh generation has no edit_state row until one of those actions happens.
+    editState: jsonb("edit_state").$type<EditState>(),
     ipHash: text("ip_hash").notNull(),
     featured: boolean("featured").notNull().default(false),
     reported: boolean("reported").notNull().default(false),

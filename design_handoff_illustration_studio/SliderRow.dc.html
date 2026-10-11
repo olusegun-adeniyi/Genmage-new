@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<div ref="{{ rootRef }}" role="slider" tabindex="0" aria-label="{{ label }}" aria-valuemin="{{ min }}" aria-valuemax="{{ max }}" aria-valuenow="{{ value }}" onPointerDown="{{ onDown }}" onPointerMove="{{ onMove }}" onPointerUp="{{ onUp }}" onKeyDown="{{ onKey }}" style="position:relative;height:40px;overflow:hidden;border-radius:12px;background:rgb(246,246,246);display:flex;align-items:center;cursor:ew-resize;touch-action:none;user-select:none;outline:none;font-family:'SF Pro',-apple-system,BlinkMacSystemFont,'Segoe UI','Helvetica Neue',sans-serif;font-size:14px;line-height:20px;" style-focus="box-shadow:inset 0 0 0 1px rgb(208,208,208);">
+  <div style="position:absolute;left:0;top:0;height:40px;width:{{ fillW }};border-radius:12px;background:rgb(90,90,90);">
+    <div style="position:absolute;top:14px;right:{{ handleRight }};width:2px;height:12px;border-radius:8px;background:rgb(255,255,255);"></div>
+  </div>
+  <span style="position:relative;flex-shrink:0;padding:10px 8px 10px 16px;white-space:nowrap;color:{{ labelColor }};transition:color .12s;">{{ label }}</span>
+  <div style="position:relative;flex:1;min-width:0;display:flex;gap:16px;padding:10px 16px;align-items:center;">
+    <div style="flex:1;height:4px;display:flex;justify-content:space-between;align-items:center;">
+      <sc-for list="{{ ticks }}" as="t" hint-placeholder-count="6">
+        <div style="width:4px;height:4px;border-radius:50%;background:rgb(208,208,208);flex-shrink:0;"></div>
+      </sc-for>
+    </div>
+    <span style="flex-shrink:0;min-width:9px;text-align:right;white-space:nowrap;color:rgb(43,43,43);font-variant-numeric:tabular-nums;">{{ display }}</span>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:325,&quot;height&quot;:40},&quot;label&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;Intensity&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;value&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;number&quot;},&quot;defaultValue&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:10,&quot;tsType&quot;:&quot;number&quot;},&quot;min&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:0,&quot;tsType&quot;:&quot;number&quot;},&quot;max&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:100,&quot;tsType&quot;:&quot;number&quot;},&quot;unit&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;ticks&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:6,&quot;min&quot;:0,&quot;max&quot;:12,&quot;tsType&quot;:&quot;number&quot;},&quot;labelWidth&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:90,&quot;tsType&quot;:&quot;number&quot;},&quot;onChange&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;(v: number) =&gt; void&quot;}}">
+class Component extends DCLogic {
+  state = { v: null, w: 293, drag: false };
+  rootRef = React.createRef();
+  componentDidMount() {
+    const el = this.rootRef.current;
+    if (!el) return;
+    this.ro = new ResizeObserver(() => this.setState({ w: el.offsetWidth }));
+    this.ro.observe(el);
+  }
+  componentWillUnmount() { this.ro && this.ro.disconnect(); }
+  get range() { return { min: this.props.min ?? 0, max: this.props.max ?? 100 }; }
+  get value() { return this.props.value ?? this.state.v ?? this.props.defaultValue ?? this.range.min; }
+  set(v) {
+    const { min, max } = this.range;
+    v = Math.round(Math.min(max, Math.max(min, v)));
+    if (v === this.value) return;
+    this.setState({ v });
+    this.props.onChange && this.props.onChange(v);
+  }
+  fromX(e) {
+    const r = this.rootRef.current.getBoundingClientRect();
+    const { min, max } = this.range;
+    const pct = (e.clientX - r.left - 5) / (r.width - 10);
+    this.set(min + pct * (max - min));
+  }
+  renderVals() {
+    const { min, max } = this.range;
+    const v = this.value;
+    const pct = max === min ? 0 : (v - min) / (max - min);
+    const fillPx = 10 + pct * (this.state.w - 10);
+    const labelW = this.props.labelWidth ?? 90;
+    return {
+      rootRef: this.rootRef,
+      label: this.props.label ?? 'Intensity',
+      min, max, value: v,
+      display: v + (this.props.unit ?? ''),
+      ticks: Array.from({ length: this.props.ticks ?? 6 }, (_, i) => i),
+      fillW: fillPx + 'px',
+      handleRight: pct < 0.02 ? '4px' : '10px',
+      labelColor: fillPx >= labelW - 6 ? 'rgb(246,246,246)' : 'rgb(139,139,139)',
+      onDown: e => { e.currentTarget.setPointerCapture(e.pointerId); this.setState({ drag: true }); this.fromX(e); },
+      onMove: e => { if (this.state.drag) this.fromX(e); },
+      onUp: () => this.setState({ drag: false }),
+      onKey: e => {
+        const step = e.shiftKey ? 10 : 1;
+        if (e.key === 'ArrowRight' || e.key === 'ArrowUp') { e.preventDefault(); this.set(v + step); }
+        if (e.key === 'ArrowLeft' || e.key === 'ArrowDown') { e.preventDefault(); this.set(v - step); }
+        if (e.key === 'Home') this.set(min);
+        if (e.key === 'End') this.set(max);
+      },
+    };
+  }
+}
+</script>
+</body>
+</html>

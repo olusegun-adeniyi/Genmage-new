@@ -8,6 +8,7 @@ import { getActiveStyle } from "@/lib/db/queries/styles";
 import { hashIp } from "@/lib/ip-hash";
 import { generateSlug } from "@/lib/slug";
 import { uploadGenerationImage } from "@/lib/storage/upload-image";
+import { DEFAULT_EDIT_STATE } from "@/lib/validation/edit-state";
 
 // This route writes to Postgres, calls Gemini, and uploads to Storage on every
 // request — never statically analyzable, so opt out of build-time evaluation.
@@ -71,5 +72,8 @@ export async function POST(request: Request) {
     imageUrl: row.imageUrl,
     prompt: row.prompt,
     style: row.style,
+    // The DB column stays null until the first PATCH (Export/Share) — the client
+    // never has to invent defaults itself. See PRD §7.
+    editState: DEFAULT_EDIT_STATE,
   });
 }

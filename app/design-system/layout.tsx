@@ -13,7 +13,7 @@ export default function DesignSystemLayout({ children }: { children: ReactNode }
   return (
     <div className="flex min-h-dvh flex-col md:flex-row">
       <GallerySidebar />
-      <main className="flex-1 bg-background px-4 py-10 md:px-10 md:py-12">{children}</main>
+      <main className="flex-1 bg-dot-grid px-4 py-10 md:px-10 md:py-12">{children}</main>
     </div>
   );
 }

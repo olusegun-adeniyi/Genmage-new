@@ -1,14 +1,10 @@
-import { spacing } from "@/design/tokens";
+import { spacing, type SpacingToken } from "@/design/tokens";
 import { SectionHeading } from "@/components/gallery/primitives";
 
-const ENTRIES: { token: keyof typeof spacing; usage: string }[] = [
-  { token: "sectionGap", usage: "Major sections inside the controls panel" },
-  { token: "panelGap", usage: "Between the four panels on desktop" },
-  { token: "cardGap", usage: "Inside a card's own internal layout" },
-  { token: "tightGap", usage: "Text-to-text within a group" },
-  { token: "pagePadding", usage: "Outer page inset before panels begin" },
-  { token: "sliderThumbHitArea", usage: "Minimum tappable area around the slider thumb — Phase E" },
-];
+// camelCase token → the CSS variable globals.css defines for it.
+function cssVariable(token: SpacingToken): string {
+  return `--spacing-${token.replace(/[A-Z]/g, (letter) => `-${letter.toLowerCase()}`)}`;
+}
 
 export function TokensSpacingSection() {
   return (
@@ -16,20 +12,16 @@ export function TokensSpacingSection() {
       <SectionHeading
         id="tokens-spacing"
         title="Spacing"
-        description="Named, meaningful gaps only. Everything else (gap-3, p-4) is ordinary Tailwind spacing, used freely without a name."
+        description="Named layout dimensions measured from the handoff. Anything on the 4px grid (gap-2, p-4, h-10) uses Tailwind's own scale without a name."
       />
-      <div className="flex flex-col gap-6">
-        {ENTRIES.map((entry) => (
-          <div key={entry.token} className="flex flex-col gap-2">
-            <p className="text-sm">
-              <span className="font-mono font-medium">{entry.token}</span>
-              <span className="ml-2 font-mono text-xs text-muted-foreground">{spacing[entry.token]}</span>
-              <span className="ml-2 text-xs text-muted-foreground">— {entry.usage}</span>
-            </p>
-            <div className="flex items-center rounded-md bg-muted p-3" style={{ gap: spacing[entry.token] }}>
-              <div className="size-6 shrink-0 rounded-sm bg-foreground" />
-              <div className="size-6 shrink-0 rounded-sm bg-foreground" />
-            </div>
+      <div className="overflow-hidden rounded-lg shadow-grid">
+        {(Object.keys(spacing) as SpacingToken[]).map((token, index) => (
+          <div
+            key={token}
+            className={`flex justify-between gap-4 px-4 py-2.5 ${index % 2 === 0 ? "bg-background" : "bg-field"}`}
+          >
+            <span className="text-foreground-strong">{cssVariable(token)}</span>
+            <span className="text-muted-foreground">{spacing[token]}</span>
           </div>
         ))}
       </div>

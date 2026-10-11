@@ -10,7 +10,7 @@ This is a small, tasteful side project. The build quality matters because it's a
 
 ## Project context (one paragraph)
 
-Genmage is a style-locked illustration generator built on a curated multi-style architecture. Users pick a style (v1 ships one: Watercolor) and type a subject; the app silently prepends that style's locked prompt — stored in the `style` table, not in code — and calls Gemini's Nano Banana image model with a curated reference image from that style's folder. Every output within a style belongs to the same visual family. The interface is dual-tone: a dark controls panel paired with a light canvas, history log, and edit panel — the one green accent lives only on the Export button, nowhere else. Post-generation editing offers six considered levers (rotate, saturation, tint, black-and-white, border colour, background colour) — nudging a generation, not a photo editor. No accounts, no payments. Shareable permalinks. A $10/day Postgres-backed cost cap protects spend; per-IP rate limiting is deferred until pre-public-launch (PRD §9). Stack: Next.js 15 + TypeScript + Tailwind v4 + Supabase + Google GenAI SDK + Vercel. Read PRD.md before any non-trivial change.
+Genmage is a style-locked illustration generator built on a curated multi-style architecture. Users pick a style (v1 ships one: Watercolor) and type a subject; the app silently prepends that style's locked prompt — stored in the `style` table, not in code — and calls Gemini's Nano Banana image model with a curated reference image from that style's folder. Every output within a style belongs to the same visual family. The interface is a two-section light studio — a left column (Generate + Recently generated) and the canvas, with the Adjustments panel floating in the canvas's top-right — built from `design_handoff_illustration_studio/` — white panels with hairline borders, one neutral grey ramp, and a single purple primary (`#6600FF`) on the active Generate button only. Post-generation editing offers nine sliders (intensity, rotate, saturation, brightness, contrast, tint, temperature, highlight, border weight) plus border and background colour — nudging a generation, not a photo editor. No accounts, no payments. Shareable permalinks. A $10/day Postgres-backed cost cap protects spend; per-IP rate limiting is deferred until pre-public-launch (PRD §9). Stack: Next.js 15 + TypeScript + Tailwind v4 + Supabase + Google GenAI SDK + Vercel. Read PRD.md before any non-trivial change.
 
 ## Operating rules
 
@@ -67,18 +67,18 @@ Genmage is a style-locked illustration generator built on a curated multi-style 
 
 ## Aesthetic non-negotiables
 
-- **Light surfaces** (canvas, history panel, edit panel): background `#fafaf9`, foreground (ink) `#0a0a0a`, muted `#f5f5f4`, muted-foreground `#737373`.
-- **Dark surface** (controls panel only): background reuses the light-surface foreground value (`#0a0a0a`) — same hex, different role, one token doing double duty on purpose. New `--foreground-on-dark` token for its text, white/warm-white. Wordmark stays white on this surface.
-- **One accent, one place:** `--accent` (`#16A34A`, green) is reserved exclusively for the Export button. Nowhere else — that exclusivity is the point, not a starting palette to expand from later.
-- Slider and swatch component patterns (rotate, saturation, tint, B&W, border/background color pickers) aren't specified at the token level yet — define them during the Phase D/E build (PRD §11), not before.
-- Inter for everything — headings, body, UI, slugs, URLs, quota indicators. No serif, no separate mono. `font-feature-settings: "cv11" 1, "ss01" 1` on the body (single-story 'a', open digits).
-- Tabular numerals (`font-variant-numeric: tabular-nums`) wherever digits appear, so they don't shift width.
-- 1px borders in `rgba(0, 0, 0, 0.08)`, hover state `rgba(0, 0, 0, 0.12)` — light surfaces. The dark surface needs its own border treatment (likely `rgba(255, 255, 255, *)`); not yet specified, define alongside the other dark tokens in Phase D.
-- Radius scale (`design/tokens.ts` → `radii`): `rounded-sm` (6px, smallest interactive elements), `rounded-md` (8px, style tiles / sample cards), `rounded-lg` (12px, cards — outer panels, canvas), `rounded-xl` (20px, reserved), `rounded-full` (pills). This is a 5-tier scale, not the earlier 3-tier one — see `DESIGN-SYSTEM.md` for the full mapping.
-- Fast, precise motion: `transition duration-150 ease-out` is the default. This is deliberately snappy, not editorial-slow.
-- The generation fade-in is still the one deliberate "delight" moment (currently 600ms, ease-out) — worth revisiting the exact number once the result surface is actually built, but it should read as a deliberate pause against the otherwise-fast system, not another 150ms transition.
+Source of truth: `design_handoff_illustration_studio/README.md` (high-fidelity) for palette and proportions → `design/tokens.ts` → `app/globals.css` for sizes. The handoff was scaled down ~20% (2026-10-08) so the studio fits a laptop viewport — `tokens.ts` sizes win over the handoff's pixel values.
 
-If you find yourself reaching for glassmorphism, gradients, or generic "AI product" tropes — stop. The reference is Linear: precise, information-dense without feeling cramped, motion that feels instant, not performative. Dark mode is no longer categorically off-limits — it's the controls panel specifically, not a global theme toggle. Don't let it creep beyond that one surface.
+- **Two sections, no page scroll from 1024px up.** Left column (Generate + Recently generated) at 20% (256px floor on narrower laptops), canvas filling the rest, 20px gap, 20px margin on every side of the screen. The Adjustments panel floats inside the canvas at its top-right; everything in the canvas keeps a 16px padding from its edge, and the illustration sits left of the panel so it's never covered. If the viewport is too short, Adjustments and the recent list scroll inside themselves. Below 1024px the layout stacks into one column (Adjustments below the canvas) and the page scrolls.
+
+- **All-light surfaces.** Page `#F5F5F5` with a low-contrast dot grid (`#DCDCDC`, 1px dots, 24px apart — `bg-dot-grid`), panels and canvas `#FFFFFF` (all with the 1px `#EAEAEA` border), fields (prompt box, sliders, colour rows) `#F6F6F6`, action bar `#F0F0F0`. No dark surface anywhere; style tiles are the only ink (`#181818`) blocks.
+- **One primary, one moment:** `--color-primary` (`#6600FF`) is the active Generate button. Nowhere else — Export is a plain toolbar button, the selected style tile uses an ink ring, not colour.
+- **One type style:** system SF Pro stack, 13px / 18px, weight 400, everywhere (the prompt textarea goes to 16px on touch screens so iOS doesn't zoom). Hierarchy comes from colour (`foreground-strong` → `foreground` → `muted-foreground`), never size or weight. Tabular numerals wherever digits appear.
+- **Borders, not shadows:** 1px `#EAEAEA` on panels. The style grid and the recent list sit directly in their panels with no outline of their own. The aspect menu is the only elevated (shadowed) surface.
+- **Radius scale** (`design/tokens.ts` → `radii`): `xs` 6 (thumbnails), `sm` 8 (list/menu items), `md` 10 (buttons, sliders, tiles, rows), `lg` 14 (prompt box, action bar, aspect menu), `xl` 16 (reserved), `2xl` 20 (panels), `full`.
+- **Fast motion:** 150ms ease-out default; 120ms for the slider label flip; the generation fade-in (400ms) is the one deliberate pause. All motion off under `prefers-reduced-motion`.
+
+If you find yourself reaching for glassmorphism, gradients, or generic "AI product" tropes — stop. The illustration on the canvas should always be the most colourful thing on screen.
 
 ## Style reference images
 

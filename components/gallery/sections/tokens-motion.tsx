@@ -1,31 +1,23 @@
 import { motion } from "@/design/tokens";
-import { SectionHeading, StatusBadge } from "@/components/gallery/primitives";
+import { SectionHeading } from "@/components/gallery/primitives";
 
-function MotionDemo({
-  label,
-  detail,
-  demoClassName,
-  planned,
-}: {
-  label: string;
-  detail: string;
-  demoClassName: string;
-  planned?: boolean;
-}) {
-  return (
-    <div className="flex flex-col gap-2">
-      <div className="flex items-center gap-2">
-        <p className="text-sm font-medium">{label}</p>
-        {planned && <StatusBadge status="planned" />}
-      </div>
-      <p className="font-mono text-xs text-muted-foreground">{detail}</p>
-      <div className="group relative h-12 w-full max-w-64 overflow-hidden rounded-md bg-muted">
-        <div className={`absolute top-1/2 left-2 size-8 -translate-y-1/2 rounded-sm bg-foreground ${demoClassName}`} />
-      </div>
-      <p className="text-xs text-muted-foreground">Hover the track to preview.</p>
-    </div>
-  );
-}
+const DEMOS = [
+  {
+    label: "durationDefault",
+    detail: `${motion.durationDefault} ${motion.easingDefault} — every hover, selection and state change`,
+    className: "duration-150",
+  },
+  {
+    label: "durationLabel",
+    detail: `${motion.durationLabel} — slider label flipping as the fill passes under it`,
+    className: "duration-120",
+  },
+  {
+    label: "durationImageFade",
+    detail: `${motion.durationImageFade} ${motion.easingDefault} — the generated illustration fading in`,
+    className: "duration-400",
+  },
+];
 
 export function TokensMotionSection() {
   return (
@@ -33,30 +25,20 @@ export function TokensMotionSection() {
       <SectionHeading
         id="tokens-motion"
         title="Motion"
-        description="Snap, not float. Real durations from live code below; durationImageFade has no live usage yet since no generation flow is wired up."
+        description="Snap, not float. Hover a track to preview. All motion is disabled under prefers-reduced-motion."
       />
-      <div className="grid grid-cols-1 gap-8 sm:grid-cols-2">
-        <MotionDemo
-          label="durationDefault"
-          detail={`${motion.durationDefault} · ease-out — the base-layer default, applied to every element`}
-          demoClassName="transition-transform duration-150 ease-out group-hover:translate-x-44"
-        />
-        <MotionDemo
-          label="durationLong"
-          detail={`${motion.durationLong} · ease-out — placeholder rotation fade in the prompt input`}
-          demoClassName="transition-transform duration-300 ease-out group-hover:translate-x-44"
-        />
-        <MotionDemo
-          label="durationImageFade"
-          detail={`${motion.durationImageFade} · ease-standard — generation reveal`}
-          demoClassName="transition-transform duration-[400ms] ease-standard group-hover:translate-x-44"
-          planned
-        />
-        <MotionDemo
-          label="easingDefault (the raw token curve)"
-          detail={`${motion.easingDefault} — distinct from Tailwind's ease-out, which is what transition-*  classes actually use today. See DESIGN-SYSTEM.md → Motion.`}
-          demoClassName="transition-transform duration-300 ease-standard group-hover:translate-x-44"
-        />
+      <div className="grid grid-cols-1 gap-8 sm:grid-cols-3">
+        {DEMOS.map((demo) => (
+          <div key={demo.label} className="flex flex-col gap-2">
+            <p className="text-foreground-strong">{demo.label}</p>
+            <p className="text-muted-foreground">{demo.detail}</p>
+            <div className="group relative h-12 w-full overflow-hidden rounded-md bg-field">
+              <div
+                className={`absolute top-1/2 left-2 size-8 -translate-y-1/2 rounded-sm bg-slider-fill transition-transform ease-out group-hover:translate-x-32 ${demo.className}`}
+              />
+            </div>
+          </div>
+        ))}
       </div>
     </section>
   );

@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<script src="./image-slot.js"></script>
+<style>
+html,body{margin:0;background:#FFFFFF;}
+*{box-sizing:border-box;}
+a{color:rgb(24,24,24);} a:hover{color:rgb(90,90,90);}
+textarea::placeholder{color:rgb(139,139,139);}
+</style>
+</helmet>
+<div style="min-height:100vh;padding:108px 42px;display:flex;justify-content:center;align-items:flex-start;background:#FFFFFF;font-family:'SF Pro',-apple-system,BlinkMacSystemFont,'Segoe UI','Helvetica Neue',sans-serif;font-size:14px;line-height:20px;color:rgb(24,24,24);">
+  <div style="width:100%;max-width:1637px;display:flex;gap:12px;align-items:stretch;">
+
+    <div data-screen-label="Generate" style="width: 367px; flex-shrink: 0; border-radius: 24px; background: rgb(255,255,255); display: flex; flex-direction: column; padding: 20px 17px 16px; border-width: 1px; border-style: solid; border-color: #EAEAEA">
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <span style="color:rgb(0,0,0);">Generate a style of illustration</span>
+          <div style="border-radius:20px;box-shadow:inset 0 0 0 1px rgb(234,234,234);display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;padding:8px;">
+            <sc-for list="{{ styles }}" as="s" hint-placeholder-count="6">
+              <div role="button" tabindex="0" aria-pressed="{{ s.selected }}" onClick="{{ s.select }}" style="position:relative;height:72px;overflow:hidden;border-radius:12px;background:rgb(24,24,24);display:flex;flex-direction:column;gap:1px;cursor:pointer;box-shadow:{{ s.ring }};opacity:{{ s.opacity }};transition:opacity .15s, box-shadow .15s;">
+                <div style="position:relative;height:47px;flex-shrink:0;border-radius:8px;overflow:hidden;background:rgb(43,43,43);">
+                  <image-slot id="style-thumb-{{ s.key }}" shape="rounded" radius="8" placeholder=""></image-slot>
+                </div>
+                <div style="height:24px;display:flex;align-items:center;padding:2px 8px;">
+                  <span style="color:rgb(255,255,255);white-space:nowrap;">{{ s.name }}</span>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+        <div style="position:relative;height:107px;border-radius:16px;background:rgb(246,246,246);">
+          <textarea value="{{ prompt }}" onChange="{{ onPrompt }}" onKeyDown="{{ onPromptKey }}" placeholder="A foggy morning in a scottish farm" style="position:absolute;left:18.5px;top:13px;right:16px;bottom:56px;resize:none;border:none;outline:none;background:transparent;padding:0;font:inherit;line-height:20px;color:rgb(43,43,43);"></textarea>
+          <button onClick="{{ onGenerate }}" disabled="{{ genDisabled }}" style="position:absolute;right:10.5px;bottom:11px;height:40px;padding:10px 12px;border:none;border-radius:12px;background:{{ genBg }};color:{{ genColor }};font:inherit;line-height:20px;cursor:{{ genCursor }};transition:background .15s,color .15s;">{{ genLabel }}</button>
+        </div>
+      </div>
+      <span style="margin-top:54px;color:rgb(0,0,0);">Recently generated</span>
+      <div data-screen-label="Recent" style="margin-top:11px;flex:1 1 0;min-height:0;overflow-y:auto;border-radius:16px;background:rgb(255,255,255);box-shadow:inset 0 0 0 0.5px rgb(234,234,234),0 0 0 0.5px rgb(234,234,234);display:flex;flex-direction:column;gap:2px;padding:6px;">
+        <sc-for list="{{ recent }}" as="r" hint-placeholder-count="0">
+          <button onClick="{{ r.restore }}" style="border:none;border-radius:10px;background:transparent;display:flex;flex-direction:column;align-items:flex-start;gap:0;padding:8px 10px;font:inherit;line-height:20px;text-align:left;cursor:pointer;" style-hover="background:rgb(246,246,246);">
+            <span style="color:rgb(24,24,24);">{{ r.prompt }}</span>
+            <span style="color:rgb(139,139,139);">{{ r.style }}</span>
+          </button>
+        </sc-for>
+      </div>
+    </div>
+
+    <div data-screen-label="Canvas" style="position:relative;flex:1;min-width:0;overflow:hidden;border-radius:24px;background:#FAFAFA;">
+      <div style="position:absolute;left:0;right:0;top:50%;transform:translateY(-50%);display:flex;justify-content:center;padding:0 24px;">
+        <span style="color:rgb(173,173,173);text-align:center;text-wrap:pretty;">{{ canvasText }}</span>
+      </div>
+
+      <div data-screen-label="Actions" style="position:absolute;left:50%;bottom:51px;transform:translateX(-50%);width:325px;height:58px;border-radius:20px;background:#F0F0F0;display:flex;gap:8px;padding:8px;">
+        <div style="position:relative;flex:1;min-width:0;">
+          <button onClick="{{ toggleMenu }}" aria-expanded="{{ menuOpen }}" style="width:100%;height:40px;border:none;border-radius:12px;background:rgb(255,255,255);display:flex;gap:6px;align-items:center;justify-content:center;padding:10px 12px;font:inherit;line-height:20px;color:rgb(24,24,24);cursor:pointer;" style-hover="background:rgb(234,234,234);">
+            <span style="white-space:nowrap;">{{ aspect }}</span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6l6-6"></path></svg>
+          </button>
+          <sc-if value="{{ menuOpen }}" hint-placeholder-val="{{ false }}">
+            <div style="position:absolute;left:-8px;right:-8px;bottom:56px;padding:6px;border-radius:16px;background:rgb(255,255,255);box-shadow:inset 0 0 0 1px rgb(234,234,234),0 8px 24px rgba(24,24,24,.08);display:flex;flex-direction:column;gap:2px;z-index:5;">
+              <sc-for list="{{ aspects }}" as="a" hint-placeholder-count="4">
+                <button onClick="{{ a.pick }}" style="height:36px;border:none;border-radius:10px;background:{{ a.bg }};display:flex;align-items:center;padding:8px 10px;font:inherit;line-height:20px;color:rgb(24,24,24);text-align:left;cursor:pointer;" style-hover="background:rgb(246,246,246);">{{ a.label }}</button>
+              </sc-for>
+            </div>
+          </sc-if>
+        </div>
+        <button onClick="{{ onShare }}" style="width:89px;flex-shrink:0;height:40px;border:none;border-radius:12px;background:rgb(255,255,255);display:flex;gap:10px;align-items:center;justify-content:center;padding:10px 12px;font:inherit;line-height:20px;color:rgb(24,24,24);cursor:pointer;" style-hover="background:rgb(234,234,234);">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7M8 7h9v9"></path></svg>
+          <span>{{ shareLabel }}</span>
+        </button>
+        <button style="width:90px;flex-shrink:0;height:40px;border:none;border-radius:12px;background:rgb(255,255,255);display:flex;gap:6px;align-items:center;justify-content:center;padding:10px 12px;font:inherit;line-height:20px;color:rgb(24,24,24);cursor:pointer;" style-hover="background:rgb(234,234,234);">
+          <span>Export</span>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 21h12M12 3v14M17 12l-5 5l-5-5"></path></svg>
+        </button>
+      </div>
+    </div>
+
+    <div data-screen-label="Adjustments" style="width: 324px; flex-shrink: 0; align-self: flex-start; border-radius: 24px; background: rgb(255,255,255); display: flex; flex-direction: column; gap: 24px; padding: 16px; border-width: 1px; border-style: solid; border-color: #EAEAEA">
+      <span style="color:rgb(0,0,0);">Illustration depth</span>
+      <div style="display:flex;flex-direction:column;gap:24px;">
+        <sc-for list="{{ sliders }}" as="sl" hint-placeholder-count="8">
+          <dc-import name="SliderRow" label="{{ sl.label }}" default-value="{{ sl.value }}" min="{{ sl.min }}" max="{{ sl.max }}" unit="{{ sl.unit }}" ticks="{{ sl.ticks }}" label-width="{{ sl.lw }}" hint-size="100%,40px"></dc-import>
+        </sc-for>
+      </div>
+      <div style="height:2px;flex-shrink:0;background:rgb(230,230,230);"></div>
+      <div style="display:flex;flex-direction:column;gap:24px;">
+        <dc-import name="SliderRow" label="Border weight" default-value="{{ zero }}" min="{{ zero }}" max="{{ ten }}" ticks="{{ four }}" label-width="{{ bwLabel }}" hint-size="100%,40px"></dc-import>
+        <label style="position:relative;height:40px;border-radius:12px;background:rgb(246,246,246);display:flex;align-items:center;justify-content:space-between;padding:10px 16px;cursor:pointer;">
+          <span style="color:rgb(139,139,139);">Border colour</span>
+          <span style="position:relative;width:20px;height:20px;border-radius:50%;background:{{ borderColor }};box-shadow:inset 0 0 0 1px rgba(0,0,0,.06);"></span>
+          <input type="color" value="{{ borderColor }}" onChange="{{ onBorderColor }}" style="position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;">
+        </label>
+        <label style="position:relative;height:40px;border-radius:12px;background:rgb(246,246,246);display:flex;align-items:center;justify-content:space-between;padding:10px 16px;cursor:pointer;">
+          <span style="color:rgb(139,139,139);">Background colour</span>
+          <span style="position:relative;width:20px;height:20px;border-radius:50%;background:{{ bgColor }};box-shadow:inset 0 0 0 1px rgba(0,0,0,.06);"></span>
+          <input type="color" value="{{ bgColor }}" onChange="{{ onBgColor }}" style="position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;">
+        </label>
+      </div>
+    </div>
+
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { style: 0, prompt: '', status: 'idle', aspect: 'Square 1:1', menuOpen: false, borderColor: '#ffae00', bgColor: '#bb80ff', shared: false, recent: [] };
+  names = ['Watercolor', 'Simple', 'Doodle', 'Line art', 'Simple', 'Doodle'];
+  componentWillUnmount() { clearTimeout(this.t); clearTimeout(this.s); }
+  generate = () => {
+    const prompt = this.state.prompt.trim();
+    if (!prompt || this.state.status === 'busy') return;
+    const style = this.state.style;
+    this.setState({ status: 'busy' });
+    clearTimeout(this.t);
+    this.t = setTimeout(() => this.setState(s => ({ status: 'done', recent: [{ prompt, style }, ...s.recent].slice(0, 20) })), 1600);
+  };
+  renderVals() {
+    const st = this.state, names = this.names;
+    const ready = st.prompt.trim().length > 0 && st.status !== 'busy';
+    const sliders = [
+      { label: 'Intensity', value: 10, min: 0, max: 100, unit: '', ticks: 6, lw: 81 },
+      { label: 'Rotate', value: 30, min: 0, max: 90, unit: 'º', ticks: 5, lw: 68 },
+      { label: 'Saturation', value: 36, min: 0, max: 100, unit: '', ticks: 6, lw: 92 },
+      { label: 'Brightness', value: 0, min: 0, max: 100, unit: '', ticks: 6, lw: 95 },
+      { label: 'Contrast', value: 0, min: 0, max: 100, unit: '', ticks: 5, lw: 81 },
+      { label: 'Tint', value: 0, min: 0, max: 100, unit: '', ticks: 6, lw: 50 },
+      { label: 'Temperature', value: 0, min: 0, max: 100, unit: '', ticks: 5, lw: 108 },
+      { label: 'Highlight', value: 0, min: 0, max: 100, unit: '', ticks: 5, lw: 84 },
+    ];
+    let canvasText = 'Illustration appears here';
+    if (st.status === 'busy') canvasText = 'Generating ' + names[st.style].toLowerCase() + ' illustration…';
+    if (st.status === 'done') canvasText = names[st.style] + ' · ' + st.prompt.trim();
+    return {
+      styles: names.map((name, i) => ({
+        key: i, name, selected: st.style === i,
+        ring: st.style === i ? '0 0 0 2px rgb(255,255,255), 0 0 0 3px rgb(24,24,24)' : 'none',
+        opacity: st.style === i ? 1 : 0.88,
+        select: () => this.setState({ style: i }),
+      })),
+      recent: st.recent.map(r => ({
+        prompt: r.prompt, style: names[r.style],
+        restore: () => this.setState({ prompt: r.prompt, style: r.style, status: 'done' }),
+      })),
+      prompt: st.prompt,
+      onPrompt: e => this.setState({ prompt: e.target.value, status: st.status === 'busy' ? 'busy' : 'idle' }),
+      onPromptKey: e => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) this.generate(); },
+      onGenerate: this.generate,
+      genDisabled: !ready,
+      genBg: ready ? '#6600FF' : 'rgb(230,230,230)',
+      genColor: ready ? 'rgb(255,255,255)' : 'rgb(147,147,147)',
+      genCursor: ready ? 'pointer' : 'default',
+      genLabel: st.status === 'busy' ? 'Generating…' : 'Generate',
+      canvasText,
+      sliders,
+      zero: 0, ten: 10, four: 4, bwLabel: 117,
+      borderColor: st.borderColor, bgColor: st.bgColor,
+      onBorderColor: e => this.setState({ borderColor: e.target.value }),
+      onBgColor: e => this.setState({ bgColor: e.target.value }),
+      aspect: st.aspect, menuOpen: st.menuOpen,
+      toggleMenu: () => this.setState({ menuOpen: !st.menuOpen }),
+      aspects: ['Square 1:1', 'Portrait 3:4', 'Landscape 4:3', 'Wide 16:9'].map(label => ({
+        label, bg: label === st.aspect ? 'rgb(246,246,246)' : 'transparent',
+        pick: () => this.setState({ aspect: label, menuOpen: false }),
+      })),
+      shareLabel: st.shared ? 'Copied' : 'Share',
+      onShare: () => {
+        try { navigator.clipboard && navigator.clipboard.writeText(location.href); } catch (e) {}
+        this.setState({ shared: true });
+        clearTimeout(this.s);
+        this.s = setTimeout(() => this.setState({ shared: false }), 1500);
+      },
+    };
+  }
+}
+</script>
+</body>
+</html>
