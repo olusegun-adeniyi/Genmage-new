@@ -48,6 +48,47 @@ export const colors = {
   editHighlight: "#ffffff", // Highlight
 } as const;
 
+// Dark theme (<html data-theme="dark">, set by the canvas toggle). Same keys as
+// `colors` — the type forces every token to have a dark value. Mirrored in the
+// :root[data-theme="dark"] block of globals.css.
+// Most inversions fall out of the token names: the slider fill goes light and
+// its on-fill label (text-field) goes dark; ink style tiles go light with dark
+// captions; the toast inverts.
+export const darkColors: Record<keyof typeof colors, string> = {
+  page: "#111111",
+  pageDot: "#262626",
+  background: "#1a1a1a", // panels
+  canvas: "#ffffff", // stays white by decision — illustrations (and their paper-removed edges) look identical in both themes; the dark UI frames the art
+  field: "#232323",
+  toolbar: "#262626",
+  border: "#2a2a2a",
+  divider: "#2e2e2e",
+  tick: "#4a4a4a",
+
+  emptyIcon: "#6b6b6b", // unchanged — sits on the white canvas and on dark panels, reads on both
+  disabledForeground: "#5c5c5c",
+  mutedForeground: "#8f8f8f",
+  sliderFill: "#d4d4d4", // light fill on a dark track
+  foregroundSoft: "#d6d6d6",
+  foreground: "#ededed",
+  foregroundStrong: "#ffffff",
+
+  primary: "#6600ff", // unchanged; white label still clears 4.5:1
+  primaryForeground: "#ffffff",
+
+  danger: "#f87171", // lighter red so it reads on dark panels
+
+  editWarm: "#ff8a00", // illustration overlays don't change with the UI theme
+  editTint: "#ff2d9b",
+  editHighlight: "#ffffff",
+};
+
+// Theme-dependent values that aren't colour utilities (CSS vars in globals.css).
+export const themeExtras = {
+  menuDrop: { light: "rgba(24, 24, 24, 0.08)", dark: "rgba(0, 0, 0, 0.5)" }, // aspect menu drop shadow
+  swatchEdge: { light: "rgba(0, 0, 0, 0.06)", dark: "rgba(255, 255, 255, 0.14)" }, // colour swatch inset edge
+} as const;
+
 export const radii = {
   // One step smaller than the handoff (8/10/12/16/20/24) to match the scaled sizes.
   xs: "6px", // style tile thumbnail
@@ -59,12 +100,13 @@ export const radii = {
   full: "9999px", // colour swatches, slider tick dots
 } as const;
 
+// Built from colour vars, so each shadow follows the active theme.
 export const shadows = {
-  grid: "inset 0 0 0 1px #eaeaea", // inset 1px outline that adds no size — gallery swatches/tables only now (style grid and recent list are outline-free)
-  tileSelected: "0 0 0 2px #ffffff, 0 0 0 4px #181818", // 2px white gap, then a 2px ink ring
-  menu: "inset 0 0 0 1px #eaeaea, 0 8px 24px rgba(24, 24, 24, 0.08)", // the only real shadow in the system
-  swatch: "inset 0 0 0 1px rgba(0, 0, 0, 0.06)", // keeps a white/near-white swatch visible
-  fieldFocus: "inset 0 0 0 1px #d0d0d0", // focus on grey fields — slider, prompt box
+  grid: "inset 0 0 0 1px var(--color-border)", // inset 1px outline that adds no size — gallery swatches/tables only now (style grid and recent list are outline-free)
+  tileSelected: "0 0 0 2px var(--color-background), 0 0 0 4px var(--color-foreground)", // 2px panel-coloured gap, then a 2px ink ring (light ring in dark)
+  menu: "inset 0 0 0 1px var(--color-border), 0 8px 24px var(--menu-drop)", // the only real shadow in the system
+  swatch: "inset 0 0 0 1px var(--swatch-edge)", // keeps a swatch matching its row visible
+  fieldFocus: "inset 0 0 0 1px var(--color-tick)", // focus on grey fields — slider, prompt box
 } as const;
 
 export const spacing = {

@@ -1,4 +1,4 @@
-import { colors, type ColorToken } from "@/design/tokens";
+import { colors, darkColors, type ColorToken } from "@/design/tokens";
 import { SectionHeading, Subsection } from "@/components/gallery/primitives";
 
 const GROUPS: { label: string; tokens: ColorToken[] }[] = [
@@ -43,17 +43,24 @@ export function TokensColorsSection() {
       <SectionHeading
         id="tokens-colors"
         title="Colors"
-        description="One neutral ramp plus a single primary. Every value is a token in design/tokens.ts, mirrored in globals.css."
+        description="One neutral ramp plus a single primary, each with a light and dark value (left · right). Every value is a token in design/tokens.ts, mirrored in globals.css."
       />
       {GROUPS.map((group) => (
         <Subsection key={group.label} label={group.label}>
           <div className="grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-2 lg:grid-cols-3">
             {group.tokens.map((token) => (
               <div key={token} className="flex items-start gap-3">
-                <div className="size-12 shrink-0 rounded-md shadow-grid" style={{ backgroundColor: colors[token] }} />
+                {/* Light | dark halves. Inline hex (not the utility) so both show
+                    regardless of the active theme. */}
+                <div className="flex size-12 shrink-0 overflow-hidden rounded-md shadow-grid">
+                  <span className="flex-1" style={{ backgroundColor: colors[token] }} />
+                  <span className="flex-1" style={{ backgroundColor: darkColors[token] }} />
+                </div>
                 <div className="min-w-0">
                   <p className="text-foreground-strong">{token}</p>
-                  <p className="text-muted-foreground uppercase">{colors[token]}</p>
+                  <p className="text-muted-foreground uppercase">
+                    {colors[token]} · {darkColors[token]}
+                  </p>
                   <p className="mt-0.5 text-muted-foreground">{USAGE[token]}</p>
                 </div>
               </div>
