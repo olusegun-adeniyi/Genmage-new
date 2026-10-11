@@ -26,7 +26,7 @@ export const colors = {
   tick: "#d0d0d0", // slider tick dots, slider focus ring
 
   // Foregrounds, lightest → darkest
-  emptyIcon: "#6b6b6b", // empty-state icons (canvas, recent list) — a step darker than their muted caption
+  iconMuted: "#6b6b6b", // secondary icons: empty states (canvas, recent list) and history card actions — a step darker than muted text
   disabledForeground: "#939393", // disabled primary button label
   mutedForeground: "#8b8b8b", // secondary text, placeholders, slider + colour row labels
   sliderFill: "#5a5a5a", // slider fill
@@ -65,7 +65,7 @@ export const darkColors: Record<keyof typeof colors, string> = {
   divider: "#2e2e2e",
   tick: "#4a4a4a",
 
-  emptyIcon: "#6b6b6b", // unchanged — sits on the white canvas and on dark panels, reads on both
+  iconMuted: "#858585", // lifted from #6b6b6b so card actions clear 3:1 on dark fields (~4.2:1 on #232323); still reads on the white canvas
   disabledForeground: "#5c5c5c",
   mutedForeground: "#8f8f8f",
   sliderFill: "#d4d4d4", // light fill on a dark track

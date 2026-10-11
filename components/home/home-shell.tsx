@@ -38,7 +38,11 @@ export function HomeShell({ styles }: HomeShellProps) {
   const [shareCopied, setShareCopied] = useState(false);
   const shareTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const canvasRef = useRef<HTMLElement>(null);
-  const { history, addEntry, updateEntryEditState } = useHistory();
+  const adjustmentsRef = useRef<HTMLElement>(null);
+  // Set by "Edit" on a history card: focus the first depth slider once that
+  // generation has rendered and the panel is enabled.
+  const focusAdjustmentsRef = useRef(false);
+  const { history, addEntry, updateEntryEditState, removeEntry } = useHistory();
   const { message: toastMessage, showToast } = useToast();
 
   useEffect(() => () => clearTimeout(shareTimeoutRef.current ?? undefined), []);
@@ -78,6 +82,26 @@ export function HomeShell({ styles }: HomeShellProps) {
     } finally {
       setIsGenerating(false);
     }
+  }
+
+  useEffect(() => {
+    if (!focusAdjustmentsRef.current || !currentGeneration) return;
+    focusAdjustmentsRef.current = false;
+    // focus() also scrolls the panel into view on the stacked layout.
+    adjustmentsRef.current?.querySelector<HTMLElement>('[role="slider"]')?.focus();
+  }, [currentGeneration]);
+
+  function handleEdit(item: HistoryItem) {
+    focusAdjustmentsRef.current = true;
+    setCurrentGeneration(item);
+    setPrompt(item.prompt);
+    setSelectedStyleId(item.style);
+  }
+
+  // History is local; removing it doesn't touch the generation row or its link.
+  function handleRemove(item: HistoryItem) {
+    removeEntry(item.slug);
+    if (currentGeneration?.slug === item.slug) setCurrentGeneration(null);
   }
 
   function handleRestore(item: HistoryItem) {
@@ -130,6 +154,8 @@ export function HomeShell({ styles }: HomeShellProps) {
           styleNames={styleNames}
           activeSlug={currentGeneration?.slug ?? null}
           onRestore={handleRestore}
+          onEdit={handleEdit}
+          onRemove={handleRemove}
         />
       </div>
       <CanvasPanel
@@ -143,6 +169,7 @@ export function HomeShell({ styles }: HomeShellProps) {
         onExport={handleExport}
         controls={
           <AdjustmentsPanel
+            ref={adjustmentsRef}
             editState={currentGeneration?.editState ?? DEFAULT_EDIT_STATE}
             onChange={handleEditChange}
             disabled={currentGeneration === null || isGenerating}

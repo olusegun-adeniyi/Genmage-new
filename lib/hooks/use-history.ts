@@ -78,5 +78,10 @@ export function useHistory() {
     writeStorage(cachedSnapshot.map((entry) => (entry.slug === slug ? { ...entry, editState } : entry)));
   }, []);
 
-  return { history, addEntry, updateEntryEditState };
+  // Local history only — the generation row and its permalink are untouched.
+  const removeEntry = useCallback((slug: string) => {
+    writeStorage(cachedSnapshot.filter((entry) => entry.slug !== slug));
+  }, []);
+
+  return { history, addEntry, updateEntryEditState, removeEntry };
 }

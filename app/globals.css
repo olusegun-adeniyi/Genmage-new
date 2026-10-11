@@ -17,7 +17,7 @@
   --color-tick: #d0d0d0;
 
   /* Foregrounds */
-  --color-empty-icon: #6b6b6b;
+  --color-icon-muted: #6b6b6b;
   --color-disabled-foreground: #939393;
   --color-muted-foreground: #8b8b8b;
   --color-slider-fill: #5a5a5a;
@@ -109,7 +109,7 @@
   --color-divider: #2e2e2e;
   --color-tick: #4a4a4a;
 
-  --color-empty-icon: #6b6b6b;
+  --color-icon-muted: #858585;
   --color-disabled-foreground: #5c5c5c;
   --color-muted-foreground: #8f8f8f;
   --color-slider-fill: #d4d4d4;

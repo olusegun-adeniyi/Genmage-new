@@ -1,9 +1,12 @@
+import type { Ref } from "react";
+
 import { ColourRow } from "@/components/ui/colour-row";
 import { SliderRow } from "@/components/ui/slider-row";
 import { BORDER_WEIGHT_CONTROL, DEPTH_CONTROLS, type AdjustmentControl } from "@/lib/edit/adjustment-controls";
 import type { EditState } from "@/lib/validation/edit-state";
 
 type AdjustmentsPanelProps = {
+  ref?: Ref<HTMLElement>;
   editState: EditState;
   onChange: (patch: Partial<EditState>) => void;
   // Edits belong to a specific generation — with nothing on the canvas there's
@@ -11,7 +14,7 @@ type AdjustmentsPanelProps = {
   disabled: boolean;
 };
 
-export function AdjustmentsPanel({ editState, onChange, disabled }: AdjustmentsPanelProps) {
+export function AdjustmentsPanel({ ref, editState, onChange, disabled }: AdjustmentsPanelProps) {
   function renderSlider(control: AdjustmentControl) {
     return (
       <SliderRow
@@ -33,6 +36,7 @@ export function AdjustmentsPanel({ editState, onChange, disabled }: AdjustmentsP
     // hugging its content; on a very short viewport it caps at the canvas height
     // and scrolls inside itself.
     <section
+      ref={ref}
       aria-label="Illustration depth"
       className="flex min-h-0 flex-col gap-4 rounded-2xl border border-border bg-background p-3.5 lg:max-h-full lg:w-adjustments-panel lg:overflow-y-auto"
     >

@@ -66,7 +66,7 @@ export function CanvasPanel({
             the icon only marks the empty canvas. No gap: the MingCute glyph already
             carries ~13px of empty space below it inside its 24-unit box. */}
         <div className="absolute inset-x-0 top-1/2 flex -translate-y-1/2 flex-col items-center gap-0 px-6 lg:right-canvas-image-right lg:left-4">
-          {!showImage && !isGenerating && <MountainsIcon className="size-20 text-empty-icon" />}
+          {!showImage && !isGenerating && <MountainsIcon className="size-20 text-icon-muted" />}
           <p role="status" aria-live="polite" className="text-center text-pretty text-muted-foreground">
             {status}
           </p>

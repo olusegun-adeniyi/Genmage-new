@@ -5,7 +5,7 @@ const GROUPS: { label: string; tokens: ColorToken[] }[] = [
   { label: "Surfaces", tokens: ["page", "pageDot", "background", "canvas", "field", "toolbar", "border", "divider", "tick"] },
   {
     label: "Foregrounds",
-    tokens: ["emptyIcon", "disabledForeground", "mutedForeground", "sliderFill", "foregroundSoft", "foreground", "foregroundStrong"],
+    tokens: ["iconMuted", "disabledForeground", "mutedForeground", "sliderFill", "foregroundSoft", "foreground", "foregroundStrong"],
   },
   { label: "Primary", tokens: ["primary", "primaryForeground"] },
   { label: "Status", tokens: ["danger"] },
@@ -22,7 +22,7 @@ const USAGE: Record<ColorToken, string> = {
   border: "Panel borders, hairlines, toolbar button hover",
   divider: "Adjustments divider, disabled Generate",
   tick: "Slider tick dots, field focus ring",
-  emptyIcon: "Empty-state icons (canvas, recent list)",
+  iconMuted: "Secondary icons — empty states, history card actions",
   disabledForeground: "Disabled button labels",
   mutedForeground: "Secondary text, placeholders, control labels",
   sliderFill: "Slider fill",

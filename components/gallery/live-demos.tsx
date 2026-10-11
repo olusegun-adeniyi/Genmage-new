@@ -71,14 +71,17 @@ const DEMO_HISTORY: HistoryItem[] = [
 }));
 
 export function RecentListDemo() {
+  const [items, setItems] = useState(DEMO_HISTORY);
   const [active, setActive] = useState<string | null>("demo-0");
   return (
     <div className="flex h-56 flex-col">
       <RecentList
-        items={DEMO_HISTORY}
+        items={items}
         styleNames={{ watercolor: "Watercolor" }}
         activeSlug={active}
         onSelect={(item) => setActive(item.slug)}
+        onEdit={(item) => setActive(item.slug)}
+        onRemove={(item) => setItems((current) => current.filter((entry) => entry.slug !== item.slug))}
       />
     </div>
   );

@@ -7,9 +7,11 @@ type RecentPanelProps = {
   styleNames: Record<string, string>;
   activeSlug: string | null;
   onRestore: (item: HistoryItem) => void;
+  onEdit: (item: HistoryItem) => void;
+  onRemove: (item: HistoryItem) => void;
 };
 
-export function RecentPanel({ history, styleNames, activeSlug, onRestore }: RecentPanelProps) {
+export function RecentPanel({ history, styleNames, activeSlug, onRestore, onEdit, onRemove }: RecentPanelProps) {
   const isEmpty = history.length === 0;
 
   return (
@@ -25,13 +27,20 @@ export function RecentPanel({ history, styleNames, activeSlug, onRestore }: Rece
       <h2 className="text-foreground-strong">Recently generated</h2>
       {isEmpty ? (
         <div className="flex flex-1 flex-col items-center justify-center gap-2">
-          <ArchiveBoxIcon className="size-13 text-empty-icon" />
+          <ArchiveBoxIcon className="size-13 text-icon-muted" />
           <p className="max-w-44 text-center text-balance text-muted-foreground">
             You haven&rsquo;t generated any illustrations yet.
           </p>
         </div>
       ) : (
-        <RecentList items={history} styleNames={styleNames} activeSlug={activeSlug} onSelect={onRestore} />
+        <RecentList
+          items={history}
+          styleNames={styleNames}
+          activeSlug={activeSlug}
+          onSelect={onRestore}
+          onEdit={onEdit}
+          onRemove={onRemove}
+        />
       )}
     </section>
   );
