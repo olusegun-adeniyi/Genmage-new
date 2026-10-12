@@ -39,11 +39,16 @@ export function IllustrationFrame({ imageUrl, prompt, editState }: IllustrationF
     "--ratio": preview.ratio,
     backgroundColor: editState.backgroundColor ?? undefined,
     borderColor: editState.borderColor,
-    borderWidth: editState.borderWeight,
+    // Proportional to the frame width (the same min() the aspect-fit utility uses
+    // for the width), so the border matches the export at any screen size.
+    borderWidth: `calc(${preview.borderFraction} * min(100cqw, 100cqh * ${preview.ratio}))`,
   } as CSSProperties;
 
   // The colour overlays are full rectangles — masked to the cutout's alpha so
-  // Temperature/Tint/Highlight tint the illustration, not the empty space.
+  // Temperature/Tint/Highlight tint the illustration, not the empty space. The
+  // soft-light blend sits on the masked group itself: a mask isolates its
+  // children, so blending on the children would only see a transparent backdrop
+  // and degrade to a flat wash. render-edited-image.ts composites the same way.
   const overlayMask: CSSProperties | undefined = cutoutSrc
     ? {
         maskImage: `url("${cutoutSrc}")`,
@@ -72,13 +77,10 @@ export function IllustrationFrame({ imageUrl, prompt, editState }: IllustrationF
               className={`object-cover transition-opacity duration-400 ease-out ${loaded ? "opacity-100" : "opacity-0"}`}
             />
           )}
-          <div className="absolute inset-0" style={overlayMask}>
-            <div className="absolute inset-0 bg-edit-warm mix-blend-soft-light" style={{ opacity: preview.warmOpacity }} />
-            <div className="absolute inset-0 bg-edit-tint mix-blend-soft-light" style={{ opacity: preview.tintOpacity }} />
-            <div
-              className="absolute inset-0 bg-edit-highlight mix-blend-soft-light"
-              style={{ opacity: preview.highlightOpacity }}
-            />
+          <div className="absolute inset-0 mix-blend-soft-light" style={overlayMask}>
+            <div className="absolute inset-0 bg-edit-warm" style={{ opacity: preview.warmOpacity }} />
+            <div className="absolute inset-0 bg-edit-tint" style={{ opacity: preview.tintOpacity }} />
+            <div className="absolute inset-0 bg-edit-highlight" style={{ opacity: preview.highlightOpacity }} />
           </div>
         </div>
       </div>

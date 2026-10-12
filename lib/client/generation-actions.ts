@@ -1,5 +1,6 @@
 import { getCutout } from "@/lib/client/cutout";
 import { patchEditState } from "@/lib/client/generation-api";
+import { renderEditedImage } from "@/lib/client/render-edited-image";
 import type { HistoryItem } from "@/lib/hooks/use-history";
 
 // Share and Export both persist the current edit state first (PRD §7) — the
@@ -17,15 +18,15 @@ export async function copyPermalink(generation: HistoryItem): Promise<boolean> {
   }
 }
 
-// Downloads the transparent cutout (paper removed, same as the canvas shows).
-// Slider edits, border and background aren't baked in yet — that composite export
-// is PRD Phase E item 39.
+// Downloads exactly what the canvas shows: the paper-removed cutout with every
+// Illustration depth edit, the aspect crop, border and background baked in
+// (PRD Phase E #39). Transparent where there's no background colour.
 export async function downloadGeneration(generation: HistoryItem): Promise<boolean> {
   await patchEditState(generation.slug, generation.editState);
 
   try {
-    const response = await fetch(await getCutout(generation.imageUrl));
-    const objectUrl = URL.createObjectURL(await response.blob());
+    const blob = await renderEditedImage(await getCutout(generation.imageUrl), generation.editState);
+    const objectUrl = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = objectUrl;
     link.download = `genmage-${generation.slug}.png`;
