@@ -10,26 +10,30 @@ import type { EditState } from "@/lib/validation/edit-state";
 
 type IllustrationFrameProps = {
   imageUrl: string;
+  vectorUrl?: string;
   prompt: string;
   editState: EditState;
 };
 
 // Keyed by imageUrl at the call site — a fresh mount per image gives each result
 // its own fade-in (and cutout lookup) without effects to reset state.
-export function IllustrationFrame({ imageUrl, prompt, editState }: IllustrationFrameProps) {
-  const [cutoutSrc, setCutoutSrc] = useState<string | null>(null);
+export function IllustrationFrame({ imageUrl, vectorUrl, prompt, editState }: IllustrationFrameProps) {
+  // Flat styles render their vector directly — it's already background-free,
+  // so the in-browser paper removal is only for raster styles.
+  const [artworkSrc, setArtworkSrc] = useState<string | null>(vectorUrl ?? null);
   const [loaded, setLoaded] = useState(false);
   const preview = previewStyle(editState);
 
   useEffect(() => {
+    if (vectorUrl) return;
     let cancelled = false;
     getCutout(imageUrl).then((src) => {
-      if (!cancelled) setCutoutSrc(src);
+      if (!cancelled) setArtworkSrc(src);
     });
     return () => {
       cancelled = true;
     };
-  }, [imageUrl]);
+  }, [imageUrl, vectorUrl]);
 
   // --ratio feeds the aspect-fit utility (globals.css); the rest is user edit
   // data, not design tokens, so it's applied inline. With the paper removed, the
@@ -49,10 +53,10 @@ export function IllustrationFrame({ imageUrl, prompt, editState }: IllustrationF
   // soft-light blend sits on the masked group itself: a mask isolates its
   // children, so blending on the children would only see a transparent backdrop
   // and degrade to a flat wash. render-edited-image.ts composites the same way.
-  const overlayMask: CSSProperties | undefined = cutoutSrc
+  const overlayMask: CSSProperties | undefined = artworkSrc
     ? {
-        maskImage: `url("${cutoutSrc}")`,
-        WebkitMaskImage: `url("${cutoutSrc}")`,
+        maskImage: `url("${artworkSrc}")`,
+        WebkitMaskImage: `url("${artworkSrc}")`,
         maskSize: "cover",
         WebkitMaskSize: "cover",
         maskPosition: "center",
@@ -66,12 +70,13 @@ export function IllustrationFrame({ imageUrl, prompt, editState }: IllustrationF
     <div className="fit-container absolute inset-x-3 top-canvas-image-top-compact bottom-canvas-image-bottom-compact flex items-center justify-center lg:top-canvas-image-top lg:right-canvas-image-right lg:bottom-canvas-image-bottom lg:left-4">
       <div className="relative aspect-fit overflow-hidden border-solid" style={frameStyle}>
         <div className="absolute inset-0" style={{ transform: preview.transform }}>
-          {cutoutSrc && (
+          {artworkSrc && (
             <NextImage
-              src={cutoutSrc}
+              src={artworkSrc}
               alt={prompt}
               fill
               sizes="(min-width: 1024px) 50vw, (min-width: 640px) 576px, 100vw"
+              unoptimized={Boolean(vectorUrl)} // next/image won't optimise SVG; serve it as-is
               onLoad={() => setLoaded(true)}
               style={{ filter: preview.filter }}
               className={`object-cover transition-opacity duration-400 ease-out ${loaded ? "opacity-100" : "opacity-0"}`}

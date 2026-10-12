@@ -1,10 +1,8 @@
-import { colors } from "@/design/tokens";
 import { applyColorFilters } from "@/lib/edit/color-filters";
+import { coverFit, exportFrame } from "@/lib/edit/export-frame";
+import { overlayLayers } from "@/lib/edit/fill-colour";
 import { previewStyle } from "@/lib/edit/preview-style";
 import type { EditState } from "@/lib/validation/edit-state";
-
-// PRD Phase E #39: exports are 1024px on the longest edge.
-const EXPORT_LONG_EDGE = 1024;
 
 function createCanvas(width: number, height: number) {
   const canvas = document.createElement("canvas");
@@ -15,12 +13,21 @@ function createCanvas(width: number, height: number) {
   return { canvas, context };
 }
 
+// An <img> rather than createImageBitmap: it decodes SVG (flat-style vectors)
+// as well as PNG/object URLs in every browser, and rasterises the vector at
+// whatever size it's drawn. crossOrigin keeps Supabase images untainted (CORS *).
+async function loadImage(src: string): Promise<HTMLImageElement> {
+  const image = new Image();
+  image.crossOrigin = "anonymous";
+  image.src = src;
+  await image.decode();
+  return image;
+}
+
 // object-fit: cover — the same crop the preview's <Image className="object-cover"> makes.
-function drawCover(context: CanvasRenderingContext2D, image: ImageBitmap, width: number, height: number) {
-  const scale = Math.max(width / image.width, height / image.height);
-  const drawWidth = image.width * scale;
-  const drawHeight = image.height * scale;
-  context.drawImage(image, (width - drawWidth) / 2, (height - drawHeight) / 2, drawWidth, drawHeight);
+function drawCover(context: CanvasRenderingContext2D, image: HTMLImageElement, width: number, height: number) {
+  const fit = coverFit(image.naturalWidth, image.naturalHeight, width, height);
+  context.drawImage(image, fit.x, fit.y, image.naturalWidth * fit.scale, image.naturalHeight * fit.scale);
 }
 
 /**
@@ -31,14 +38,9 @@ function drawCover(context: CanvasRenderingContext2D, image: ImageBitmap, width:
  */
 export async function renderEditedImage(imageSrc: string, editState: EditState): Promise<Blob> {
   const style = previewStyle(editState);
-  const response = await fetch(imageSrc);
-  const image = await createImageBitmap(await response.blob());
+  const image = await loadImage(imageSrc);
 
-  const width = style.ratio >= 1 ? EXPORT_LONG_EDGE : Math.round(EXPORT_LONG_EDGE * style.ratio);
-  const height = style.ratio >= 1 ? Math.round(EXPORT_LONG_EDGE / style.ratio) : EXPORT_LONG_EDGE;
-  const border = Math.round(style.borderFraction * width);
-  const innerWidth = width - border * 2;
-  const innerHeight = height - border * 2;
+  const { width, height, border, innerWidth, innerHeight } = exportFrame(style);
 
   // 1. The illustration layer: cover crop, colour filters, then overlays.
   const layer = createCanvas(innerWidth, innerHeight);
@@ -47,11 +49,7 @@ export async function renderEditedImage(imageSrc: string, editState: EditState):
   applyColorFilters(pixels.data, style);
   layer.context.putImageData(pixels, 0, 0);
 
-  const overlays: [string, number][] = [
-    [colors.editWarm, style.warmOpacity],
-    [colors.editTint, style.tintOpacity],
-    [colors.editHighlight, style.highlightOpacity],
-  ];
+  const overlays = overlayLayers(style);
   if (overlays.some(([, opacity]) => opacity > 0)) {
     // Mirrors the preview: stack the tints normally, mask them to the
     // illustration's alpha, then soft-light the result onto the illustration once.
@@ -97,7 +95,6 @@ export async function renderEditedImage(imageSrc: string, editState: EditState):
     context.fill("evenodd");
   }
 
-  image.close();
   const blob = await new Promise<Blob | null>((resolve) => frame.canvas.toBlob(resolve, "image/png"));
   if (!blob) throw new Error("PNG encode failed");
   return blob;

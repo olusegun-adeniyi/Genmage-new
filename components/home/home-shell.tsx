@@ -6,7 +6,7 @@ import { layout } from "@/design/tokens";
 
 import type { StyleOption } from "@/components/prompt/style-grid";
 import { Toast, useToast } from "@/components/ui/toast";
-import { copyPermalink, downloadGeneration } from "@/lib/client/generation-actions";
+import { copyPermalink, downloadGeneration, downloadVector } from "@/lib/client/generation-actions";
 import { GenerateApiError, requestGeneration } from "@/lib/client/generation-api";
 import { useHistory, type HistoryItem } from "@/lib/hooks/use-history";
 import { DEFAULT_EDIT_STATE, type EditState } from "@/lib/validation/edit-state";
@@ -72,6 +72,7 @@ export function HomeShell({ styles }: HomeShellProps) {
         prompt: result.prompt,
         style: result.style,
         editState: result.editState,
+        vectorUrl: result.vectorUrl ?? undefined,
         createdAt: new Date().toISOString(),
       };
       setCurrentGeneration(entry);
@@ -134,6 +135,11 @@ export function HomeShell({ styles }: HomeShellProps) {
     if (!(await downloadGeneration(currentGeneration))) showToast("Couldn't download the image — try again.");
   }
 
+  async function handleExportVector() {
+    if (!currentGeneration) return;
+    if (!(await downloadVector(currentGeneration))) showToast("Couldn't download the SVG — try again.");
+  }
+
   return (
     // Below lg: one stacked column. At lg: two sections in one grid row filling
     // the viewport — left 20% (256px floor), canvas the rest, 20px apart (see tokens.layout).
@@ -167,6 +173,7 @@ export function HomeShell({ styles }: HomeShellProps) {
         shareCopied={shareCopied}
         onShare={handleShare}
         onExport={handleExport}
+        onExportVector={handleExportVector}
         controls={
           <AdjustmentsPanel
             ref={adjustmentsRef}

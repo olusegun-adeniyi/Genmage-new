@@ -10,6 +10,7 @@ export type HistoryItem = {
   prompt: string;
   style: string;
   editState: EditState;
+  vectorUrl?: string; // flat styles only; absent on older entries and raster styles
   createdAt: string; // ISO — relative time is computed at render time, not stored
 };
 

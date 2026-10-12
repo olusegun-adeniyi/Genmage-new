@@ -6,6 +6,7 @@ export type GenerateResponse = {
   prompt: string;
   style: string;
   editState: EditState;
+  vectorUrl: string | null; // flat styles only — the editable SVG
 };
 
 export type GenerateErrorCode = "invalid_prompt" | "invalid_style" | "cost_cap_reached" | "refused" | "failed";

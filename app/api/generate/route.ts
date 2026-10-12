@@ -2,12 +2,13 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 
 import { generateImage } from "@/lib/ai/generate-image";
+import { isVectorStyle, vectorizeImage } from "@/lib/ai/vectorize-image";
 import { getTodaysCostUsd, incrementTodaysCost } from "@/lib/db/queries/daily-cost";
 import { insertGeneration } from "@/lib/db/queries/generations";
 import { getActiveStyle } from "@/lib/db/queries/styles";
 import { hashIp } from "@/lib/ip-hash";
 import { generateSlug } from "@/lib/slug";
-import { uploadGenerationImage } from "@/lib/storage/upload-image";
+import { uploadGenerationImage, uploadGenerationVector } from "@/lib/storage/upload-image";
 import { DEFAULT_EDIT_STATE } from "@/lib/validation/edit-state";
 
 // This route writes to Postgres, calls Gemini, and uploads to Storage on every
@@ -55,6 +56,17 @@ export async function POST(request: Request) {
 
   const imageUrl = await uploadGenerationImage(slug, result.image.data, result.image.mimeType);
 
+  // Flat styles also get an editable vector. Best-effort: the PNG is the
+  // generation; a failed trace just means no vector editing for this one.
+  let vectorUrl: string | null = null;
+  if (isVectorStyle(styleId)) {
+    try {
+      vectorUrl = await uploadGenerationVector(slug, await vectorizeImage(result.image.data));
+    } catch (error) {
+      console.error(`Vectorizing ${slug} failed:`, error);
+    }
+  }
+
   const row = await insertGeneration({
     slug,
     prompt: parsed.data.prompt,
@@ -72,6 +84,7 @@ export async function POST(request: Request) {
     imageUrl: row.imageUrl,
     prompt: row.prompt,
     style: row.style,
+    vectorUrl,
     // The DB column stays null until the first PATCH (Export/Share) — the client
     // never has to invent defaults itself. See PRD §7.
     editState: DEFAULT_EDIT_STATE,

@@ -30,6 +30,9 @@ export function ColourRow({ label, value, onChange, onClear, disabled = false }:
         type="color"
         value={value ?? PICKER_FALLBACK}
         disabled={disabled}
+        // Firefox restores form-field state (incl. disabled) on reload before
+        // hydration — a hydration mismatch. The value is ours, not the browser's.
+        autoComplete="off"
         onChange={(event) => onChange(event.target.value)}
         className={`absolute inset-0 size-full opacity-0 ${disabled ? "cursor-default" : "cursor-pointer"}`}
       />

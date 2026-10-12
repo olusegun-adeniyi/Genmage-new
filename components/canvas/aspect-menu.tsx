@@ -1,10 +1,11 @@
-"use client"; // owns open state, click-outside/Escape listeners and option focus
+"use client"; // owns open state and option focus
 
 import { ChevronDown } from "lucide-react";
 import type { KeyboardEvent } from "react";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
+import { useDismiss } from "@/lib/hooks/use-dismiss";
 import { ASPECT_LABELS, ASPECT_RATIOS, type AspectRatio } from "@/lib/validation/edit-state";
 
 type AspectMenuProps = {
@@ -19,26 +20,12 @@ export function AspectMenu({ value, onChange, disabled }: AspectMenuProps) {
   const triggerRef = useRef<HTMLButtonElement>(null);
   const optionRefs = useRef<(HTMLButtonElement | null)[]>([]);
 
+  const close = useCallback(() => setOpen(false), []);
+  const focusTrigger = useCallback(() => triggerRef.current?.focus(), []);
+  useDismiss(open, containerRef, close, focusTrigger);
+
   useEffect(() => {
-    if (!open) return;
-
-    optionRefs.current[ASPECT_RATIOS.indexOf(value)]?.focus();
-
-    function handlePointerDown(event: PointerEvent) {
-      if (event.target instanceof Node && !containerRef.current?.contains(event.target)) setOpen(false);
-    }
-    function handleKeyDown(event: globalThis.KeyboardEvent) {
-      if (event.key !== "Escape") return;
-      setOpen(false);
-      triggerRef.current?.focus();
-    }
-
-    document.addEventListener("pointerdown", handlePointerDown);
-    document.addEventListener("keydown", handleKeyDown);
-    return () => {
-      document.removeEventListener("pointerdown", handlePointerDown);
-      document.removeEventListener("keydown", handleKeyDown);
-    };
+    if (open) optionRefs.current[ASPECT_RATIOS.indexOf(value)]?.focus();
   }, [open, value]);
 
   function pick(next: AspectRatio) {

@@ -16,6 +16,7 @@ type CanvasPanelProps = {
   shareCopied: boolean;
   onShare: () => void;
   onExport: () => void;
+  onExportVector: () => void;
   // The Adjustments panel. ≥ lg it floats in the canvas's top-right corner;
   // stacked, it sits below the canvas.
   controls: ReactNode;
@@ -30,6 +31,7 @@ export function CanvasPanel({
   shareCopied,
   onShare,
   onExport,
+  onExportVector,
   controls,
 }: CanvasPanelProps) {
   const showImage = generation !== null && !isGenerating;
@@ -57,6 +59,7 @@ export function CanvasPanel({
           <IllustrationFrame
             key={generation.imageUrl}
             imageUrl={generation.imageUrl}
+            vectorUrl={generation.vectorUrl}
             prompt={generation.prompt}
             editState={generation.editState}
           />
@@ -78,6 +81,7 @@ export function CanvasPanel({
           shareCopied={shareCopied}
           onShare={onShare}
           onExport={onExport}
+          onExportVector={generation?.vectorUrl ? onExportVector : undefined}
         />
       </div>
       {/* Spans the canvas height (16px padding top and bottom) so the panel can cap

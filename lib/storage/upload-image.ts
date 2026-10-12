@@ -40,3 +40,17 @@ export async function uploadGenerationImage(
 
   return getSupabase().storage.from(BUCKET).getPublicUrl(path).data.publicUrl;
 }
+
+// The editable vector for flat styles, stored beside the PNG as {slug}.svg.
+export async function uploadGenerationVector(slug: string, svg: string): Promise<string> {
+  const path = `${slug}.svg`;
+  const { error } = await getSupabase()
+    .storage.from(BUCKET)
+    .upload(path, Buffer.from(svg, "utf-8"), { contentType: "image/svg+xml" });
+
+  if (error) {
+    throw new Error(`Failed to upload generation vector: ${error.message}`);
+  }
+
+  return getSupabase().storage.from(BUCKET).getPublicUrl(path).data.publicUrl;
+}
