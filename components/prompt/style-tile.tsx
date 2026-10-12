@@ -29,7 +29,13 @@ export function StyleTile({ name, imageSrc, selected, comingSoon = false, onSele
       onClick={comingSoon ? undefined : onSelect}
       className={`relative flex h-15 flex-col gap-px overflow-hidden rounded-md bg-foreground text-left transition-[opacity,box-shadow] duration-150 ease-out focus-visible:outline-2 focus-visible:outline-offset-6 focus-visible:outline-foreground ${stateClass}`}
     >
-      <span className="relative block h-tile-thumb shrink-0 overflow-hidden rounded-xs bg-foreground-soft">
+      {/* Artwork sits on the canvas white (white in both themes) so transparent
+          thumbnails read cleanly; empty coming-soon slots keep the dark placeholder. */}
+      <span
+        className={`relative block h-tile-thumb shrink-0 overflow-hidden rounded-xs ${
+          imageSrc ? "bg-canvas" : "bg-foreground-soft"
+        }`}
+      >
         {imageSrc && <Image src={imageSrc} alt="" fill sizes="96px" className="object-cover" />}
       </span>
       <span className="flex h-5 min-w-0 items-center px-1 text-background">

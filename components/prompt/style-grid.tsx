@@ -11,6 +11,7 @@ const COMING_SOON_NAMES = ["Simple", "Doodle", "Line art", "Simple", "Doodle"];
 // Thumbnails are curated artwork in /public, keyed by style id — not user data.
 const STYLE_THUMBNAILS: Record<string, string> = {
   watercolor: "/examples/style-tile-watercolor.jpg",
+  simple: "/examples/style-tile-simple-burger.png", // transparent — sits on the tile's white artwork backdrop
 };
 
 type StyleGridProps = {
@@ -20,8 +21,10 @@ type StyleGridProps = {
 };
 
 export function StyleGrid({ styles, selectedId, onSelect }: StyleGridProps) {
+  // A placeholder never repeats a style that's already live (e.g. "Simple").
+  const liveNames = new Set(styles.map((style) => style.name.toLowerCase()));
   const placeholderCount = Math.max(0, GRID_SIZE - styles.length);
-  const placeholders = COMING_SOON_NAMES.slice(0, placeholderCount);
+  const placeholders = COMING_SOON_NAMES.filter((name) => !liveNames.has(name.toLowerCase())).slice(0, placeholderCount);
 
   return (
     <div

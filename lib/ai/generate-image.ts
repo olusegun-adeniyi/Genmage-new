@@ -44,8 +44,25 @@ function getClient(): GoogleGenAI {
   return client;
 }
 
+// The image model takes a single prompt, so the parts are labelled sections: the
+// style's locked prompt (from the style table) says HOW to draw, the user's text
+// says WHAT to draw, and the output requirements are the app's own constraints.
+// The reference line stops the model copying the reference's subject or layout.
+// Square on purpose: aspect ratio is a non-destructive crop applied afterwards
+// (edit state), and plain white is what the in-browser paper removal turns into
+// real transparency — Gemini can't emit an alpha channel itself.
 function buildPrompt(stylePrompt: string, userPrompt: string): string {
-  return `${stylePrompt}\n\nSubject: ${userPrompt}\n\nMatch the illustration style of the reference image exactly. 1024x1024 square composition, centered.`;
+  return [
+    `STYLE\n${stylePrompt}`,
+    "REFERENCE\nThe attached image shows the target illustration style. Transfer its visual treatment — shapes, rendering, colour handling and level of detail — not its subject, characters or layout.",
+    `SUBJECT\n${userPrompt}`,
+    [
+      "OUTPUT REQUIREMENTS",
+      "- One square 1024x1024 illustration of the subject above.",
+      "- Plain white background unless the subject describes a scene or setting. If a transparent background is requested, use plain white; never draw a checkerboard.",
+      "- No text, logos, watermarks or signatures unless the subject asks for text.",
+    ].join("\n"),
+  ].join("\n\n");
 }
 
 async function pickStyleReference(styleId: string): Promise<{
