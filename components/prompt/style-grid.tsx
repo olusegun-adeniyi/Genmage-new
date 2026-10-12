@@ -4,14 +4,15 @@ export type StyleOption = { id: string; name: string };
 
 const GRID_SIZE = 6;
 
-// Placeholder names straight from the handoff (which itself flags the second
-// row's duplicates as needing real names). Swap here once styles are decided.
-const COMING_SOON_NAMES = ["Simple", "Doodle", "Line art", "Simple", "Doodle"];
+// Placeholder names fill the grid until more styles ship — unique, so the grid
+// never shows a gap or a duplicate. Swap here once styles are decided.
+const COMING_SOON_NAMES = ["Line art", "Pixel art", "Collage"];
 
 // Thumbnails are curated artwork in /public, keyed by style id — not user data.
 const STYLE_THUMBNAILS: Record<string, string> = {
   watercolor: "/examples/style-tile-watercolor.jpg",
   simple: "/examples/style-tile-simple-oranges.png", // on a near-white backdrop that fills the tile
+  doodle: "/examples/style-tile-doodle.jpg",
 };
 
 type StyleGridProps = {
