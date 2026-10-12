@@ -11,7 +11,7 @@ const COMING_SOON_NAMES = ["Simple", "Doodle", "Line art", "Simple", "Doodle"];
 // Thumbnails are curated artwork in /public, keyed by style id — not user data.
 const STYLE_THUMBNAILS: Record<string, string> = {
   watercolor: "/examples/style-tile-watercolor.jpg",
-  simple: "/examples/style-tile-simple-burger.png", // transparent — sits on the tile's white artwork backdrop
+  simple: "/examples/style-tile-simple-oranges.png", // on a near-white backdrop that fills the tile
 };
 
 type StyleGridProps = {

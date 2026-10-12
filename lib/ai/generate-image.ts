@@ -107,7 +107,10 @@ export async function generateImage(
       { inlineData: { data: styleRef.data, mimeType: styleRef.mimeType } },
       { text: buildPrompt(activeStyle.prompt, userPrompt) },
     ],
-    config: { responseModalities: [Modality.IMAGE] },
+    // Pin the output square: left alone, the model copies the reference image's
+    // shape (Simple's references are landscape → 1696×608 outputs that the
+    // square canvas then crops). Aspect ratio is a post-generation crop here.
+    config: { responseModalities: [Modality.IMAGE], imageConfig: { aspectRatio: "1:1" } },
   });
 
   if (response.promptFeedback?.blockReason) {

@@ -50,6 +50,20 @@
       "when": 1791762972270,
       "tag": "0006_simple_style_lineless",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1791817778564,
+      "tag": "0007_simple_style_geometric",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1791818877601,
+      "tag": "0008_simple_style_semi_realistic",
+      "breakpoints": true
     }
   ]
 }
