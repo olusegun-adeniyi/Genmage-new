@@ -63,6 +63,8 @@ export function IllustrationFrame({ imageUrl, vectorUrl, prompt, editState, zoom
   const showOutline = wrapOutline && outline !== null;
   const pad = showOutline ? outline.pad : 0;
   const stickerWidth = artSize.width + pad * 2;
+  // The frame itself only shows when it's painted.
+  const frameVisible = editState.backgroundColor !== null || editState.borderWeight > 0;
   const stickerAspect = stickerWidth / (artSize.height + pad * 2);
 
   // --ratio feeds the aspect-fit utility (globals.css); the rest is user edit
@@ -113,7 +115,10 @@ export function IllustrationFrame({ imageUrl, vectorUrl, prompt, editState, zoom
       } ${touchPans ? "touch-none" : ""}
       }`}
     >
-      <div className="relative aspect-fit border-solid" style={frameStyle}>
+      {/* data-canvas-content marks what's visibly on the canvas — the pan limits
+          keep it within the canvas (use-canvas-zoom). With a background or border
+          that's the whole frame; otherwise the illustration (or its sticker). */}
+      <div className="relative aspect-fit border-solid" style={frameStyle} data-canvas-content={frameVisible || undefined}>
         {/* A size container, so the art box below can fit itself with container units. */}
         <div className="fit-container absolute inset-0" style={{ transform: preview.transform }}>
           {/* The art box: the whole artwork fitted inside the frame (contain) —
@@ -121,6 +126,7 @@ export function IllustrationFrame({ imageUrl, vectorUrl, prompt, editState, zoom
               whole sticker (art + pad on every side) is what's fitted, so the
               outline is never cut either. Same maths as placeArt() in the exports. */}
           <div
+            data-canvas-content={(!frameVisible && !showOutline) || undefined}
             className="absolute top-1/2 left-1/2 -translate-1/2"
             style={{
               width: `calc(min(100cqw, 100cqh * ${stickerAspect}) * ${artSize.width / stickerWidth})`,
@@ -133,6 +139,7 @@ export function IllustrationFrame({ imageUrl, vectorUrl, prompt, editState, zoom
             {outline && (
               <div
                 aria-hidden="true"
+                data-canvas-content={(!frameVisible && showOutline) || undefined}
                 className={`pointer-events-none absolute transition-opacity duration-150 ease-out ${
                   showOutline && loaded ? "opacity-100" : "opacity-0"
                 }`}

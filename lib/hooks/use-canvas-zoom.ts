@@ -15,29 +15,57 @@ const isGestureEvent = (event: Event): event is GestureEventLike => "scale" in e
 
 const clampZoom = (zoom: number) => Math.min(canvasZoom.max, Math.max(canvasZoom.min, zoom));
 
-// Pan range on one axis. The frame (size `size`, resting centre `rest`) stays
-// inside the canvas [start, end] when it fits; when it's bigger, it keeps the
-// canvas covered — either way the illustration never leaves the canvas.
-function panRange(rest: number, size: number, start: number, end: number): [number, number] {
-  const insideMin = start - rest + size / 2; // frame's leading edge on the canvas's
-  const insideMax = end - rest - size / 2; // trailing edge on the canvas's
+// Pan range on one axis for content whose edges sit `near`/`far` px from the
+// frame's centre (at the proposed zoom), with the frame resting at `rest`. Content
+// that fits stays inside the canvas [start, end]; bigger content keeps the
+// canvas covered — either way it never leaves the canvas.
+function panRange(rest: number, near: number, far: number, start: number, end: number): [number, number] {
+  const insideMin = start - rest - near; // content's leading edge on the canvas's
+  const insideMax = end - rest - far; // trailing edge on the canvas's
   return insideMin <= insideMax ? [insideMin, insideMax] : [insideMax, insideMin];
 }
 
 /**
- * Keeps the illustration within the canvas, whatever the pan or zoom. The
- * frame is the aspect-fit box centred in the area (the same min() the aspect-fit
- * utility uses), scaled by the zoom.
+ * Keeps what's actually visible within the canvas. The visible content is
+ * whatever the frame marks with data-canvas-content — the illustration (or the
+ * sticker, with a wrap outline), or the whole frame once it has a background or
+ * border. Its extent is measured from the DOM relative to the frame's rendered
+ * centre and scale, so it's right mid-animation and with rotation.
  */
-function clampPan(view: CanvasView, area: DOMRect, canvas: DOMRect, ratio: number): CanvasView {
-  const frameWidth = Math.min(area.width, area.height * ratio) * view.zoom;
-  const frameHeight = frameWidth / ratio;
-  const [minX, maxX] = panRange(area.left + area.width / 2, frameWidth, canvas.left, canvas.right);
-  const [minY, maxY] = panRange(area.top + area.height / 2, frameHeight, canvas.top, canvas.bottom);
+function clampPan(next: CanvasView, area: HTMLElement): CanvasView {
+  const frame = area.firstElementChild;
+  const content = area.querySelector("[data-canvas-content]");
+  const canvas = area.parentElement; // the stage the area is inset in
+  if (!(frame instanceof HTMLElement) || !content || !canvas) return next;
+
+  const areaBox = area.getBoundingClientRect();
+  const canvasBox = canvas.getBoundingClientRect();
+  const frameBox = frame.getBoundingClientRect();
+  const contentBox = content.getBoundingClientRect();
+  const renderedScale = frameBox.width / frame.offsetWidth || 1;
+  const centreX = frameBox.left + frameBox.width / 2;
+  const centreY = frameBox.top + frameBox.height / 2;
+  // Content edges relative to the frame's centre, per unit of zoom, then at the proposed zoom.
+  const edge = (value: number, centre: number) => ((value - centre) / renderedScale) * next.zoom;
+
+  const [minX, maxX] = panRange(
+    areaBox.left + areaBox.width / 2,
+    edge(contentBox.left, centreX),
+    edge(contentBox.right, centreX),
+    canvasBox.left,
+    canvasBox.right,
+  );
+  const [minY, maxY] = panRange(
+    areaBox.top + areaBox.height / 2,
+    edge(contentBox.top, centreY),
+    edge(contentBox.bottom, centreY),
+    canvasBox.top,
+    canvasBox.bottom,
+  );
   return {
-    zoom: view.zoom,
-    x: Math.min(maxX, Math.max(minX, view.x)),
-    y: Math.min(maxY, Math.max(minY, view.y)),
+    zoom: next.zoom,
+    x: Math.min(maxX, Math.max(minX, next.x)),
+    y: Math.min(maxY, Math.max(minY, next.y)),
   };
 }
 
@@ -55,9 +83,9 @@ function zoomAround(view: CanvasView, factor: number, area: DOMRect, clientX: nu
 
 /**
  * View zoom and pan for the illustration area. Resets whenever `resetKey`
- * changes (a new illustration opens at fit). `ratio` is the frame's w:h.
+ * changes (a new illustration opens at fit).
  */
-export function useCanvasZoom(resetKey: string | null, ratio: number) {
+export function useCanvasZoom(resetKey: string | null) {
   const [state, setState] = useState({ key: resetKey, view: FIT, animate: false });
   const view = state.key === resetKey ? state.view : FIT;
   const animate = state.key === resetKey && state.animate;
@@ -65,24 +93,15 @@ export function useCanvasZoom(resetKey: string | null, ratio: number) {
   const [area, setArea] = useState<HTMLDivElement | null>(null);
   // Latest values for the native listeners and handlers, synced after each render.
   const viewRef = useRef(view);
-  const ratioRef = useRef(ratio);
   const keyRef = useRef(resetKey);
   useLayoutEffect(() => {
     viewRef.current = view;
-    ratioRef.current = ratio;
     keyRef.current = resetKey;
   });
 
   const commit = useCallback(
     (next: CanvasView, animated: boolean) => {
-      // The canvas is the area's positioned parent (the stage the area is inset in).
-      const bounds = area?.getBoundingClientRect();
-      const canvas = area?.parentElement?.getBoundingClientRect();
-      setState({
-        key: keyRef.current,
-        view: bounds && canvas ? clampPan(next, bounds, canvas, ratioRef.current) : next,
-        animate: animated,
-      });
+      setState({ key: keyRef.current, view: area ? clampPan(next, area) : next, animate: animated });
     },
     [area],
   );

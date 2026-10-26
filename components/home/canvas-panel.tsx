@@ -7,7 +7,7 @@ import { MountainsIcon } from "@/components/ui/icons";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { useCanvasZoom } from "@/lib/hooks/use-canvas-zoom";
 import type { HistoryItem } from "@/lib/hooks/use-history";
-import { ASPECT_VALUES, DEFAULT_EDIT_STATE, type AspectRatio } from "@/lib/validation/edit-state";
+import { DEFAULT_EDIT_STATE, type AspectRatio } from "@/lib/validation/edit-state";
 
 type CanvasPanelProps = {
   ref?: Ref<HTMLElement>;
@@ -37,9 +37,9 @@ export function CanvasPanel({
   controls,
 }: CanvasPanelProps) {
   const showImage = generation !== null && !isGenerating;
-  // Each illustration opens fitted; the aspect ratio sizes the frame for pan limits.
   const aspectRatio = generation?.editState.aspectRatio ?? DEFAULT_EDIT_STATE.aspectRatio;
-  const zoom = useCanvasZoom(showImage ? generation.imageUrl : null, ASPECT_VALUES[aspectRatio]);
+  // Each illustration opens fitted and centred.
+  const zoom = useCanvasZoom(showImage ? generation.imageUrl : null);
   const status = isGenerating
     ? `Generating ${generatingStyleName.toLowerCase()} illustration…`
     : showImage
