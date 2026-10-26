@@ -155,16 +155,17 @@ export function useCanvasZoom(resetKey: string | null) {
     };
   }, [area, commit]);
 
-  // Drag moves the illustration around the canvas at any zoom. On touch, only
+  // Dragging the illustration moves it around the canvas at any zoom. On touch, only
   // while zoomed in: at fit a finger on the canvas still scrolls the page.
   const drag = useRef<{ pointerId: number; x: number; y: number } | null>(null);
   const [dragging, setDragging] = useState(false);
-  const canPan = resetKey !== null;
   const touchPans = view.zoom > 1;
 
   const onPointerDown = useCallback(
     (event: ReactPointerEvent<HTMLDivElement>) => {
       if (keyRef.current === null || event.button !== 0) return;
+      // Only the illustration itself picks up — not the empty canvas around it.
+      if (!(event.target instanceof Element) || !event.target.closest("[data-canvas-draggable]")) return;
       if (event.pointerType === "touch" && viewRef.current.zoom <= 1) return;
       event.preventDefault(); // no native image drag or text selection while panning
       event.currentTarget.setPointerCapture(event.pointerId);
@@ -192,7 +193,6 @@ export function useCanvasZoom(resetKey: string | null) {
   return {
     view,
     animate,
-    canPan,
     touchPans,
     dragging,
     attachArea: setArea, // callback ref for the illustration area

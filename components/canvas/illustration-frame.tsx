@@ -32,7 +32,11 @@ export function IllustrationFrame({ imageUrl, vectorUrl, prompt, editState, zoom
   const [artSize, setArtSize] = useState({ width: 1, height: 1 });
   const preview = previewStyle(editState);
   const wrapOutline = editState.wrapOutline;
-  const { view, animate, canPan, touchPans, dragging, attachArea, panHandlers } = zoom;
+  const { view, animate, touchPans, dragging, attachArea, panHandlers } = zoom;
+  // Hovering the illustration shows it can be picked up: a hand cursor and a soft
+  // lift shadow, kept while it's dragged.
+  const [hovered, setHovered] = useState(false);
+  const lifted = hovered || dragging;
 
   useEffect(() => {
     if (vectorUrl) return;
@@ -65,6 +69,17 @@ export function IllustrationFrame({ imageUrl, vectorUrl, prompt, editState, zoom
   const stickerWidth = artSize.width + pad * 2;
   // The frame itself only shows when it's painted.
   const frameVisible = editState.backgroundColor !== null || editState.borderWeight > 0;
+
+  // The visible piece (frame, sticker or bare artwork) is the drag handle and
+  // carries the lift; the shadow is a drop-shadow filter, so it follows the
+  // artwork's shape rather than its box.
+  const grabCursor = dragging ? "cursor-grabbing" : "cursor-grab";
+  const liftClass = (isContent: boolean) => (isContent && lifted ? "drop-shadow-illustration-lift" : "");
+  const draggable = {
+    "data-canvas-draggable": true,
+    onPointerEnter: () => setHovered(true),
+    onPointerLeave: () => setHovered(false),
+  };
   const stickerAspect = stickerWidth / (artSize.height + pad * 2);
 
   // --ratio feeds the aspect-fit utility (globals.css); the rest is user edit
@@ -81,8 +96,14 @@ export function IllustrationFrame({ imageUrl, vectorUrl, prompt, editState, zoom
     // View zoom/pan sits on the whole frame (border and background included) and
     // never touches the edit state or the export.
     transform: `translate(${view.x}px, ${view.y}px) scale(${view.zoom})`,
-    // Buttons glide (default motion); gestures track the input directly.
-    transition: animate ? `transform ${motion.durationDefault} ${motion.easingDefault}` : "none",
+    // Buttons glide (default motion); gestures track the input directly. The lift
+    // shadow (filter) always fades.
+    transition: [
+      animate ? `transform ${motion.durationDefault} ${motion.easingDefault}` : null,
+      `filter ${motion.durationDefault} ${motion.easingDefault}`,
+    ]
+      .filter(Boolean)
+      .join(", "),
   } as CSSProperties;
 
   // The colour overlays are full rectangles — masked to the cutout's alpha so
@@ -111,14 +132,19 @@ export function IllustrationFrame({ imageUrl, vectorUrl, prompt, editState, zoom
       ref={attachArea}
       {...panHandlers}
       className={`fit-container absolute inset-x-3 top-canvas-image-top-compact bottom-canvas-image-bottom-compact flex items-center justify-center select-none lg:top-canvas-image-top lg:right-canvas-image-right lg:bottom-canvas-image-bottom lg:left-4 ${
-        canPan ? (dragging ? "cursor-grabbing" : "cursor-grab") : ""
+        dragging ? "cursor-grabbing" : ""
       } ${touchPans ? "touch-none" : ""}
       }`}
     >
       {/* data-canvas-content marks what's visibly on the canvas — the pan limits
           keep it within the canvas (use-canvas-zoom). With a background or border
           that's the whole frame; otherwise the illustration (or its sticker). */}
-      <div className="relative aspect-fit border-solid" style={frameStyle} data-canvas-content={frameVisible || undefined}>
+      <div
+        className={`relative aspect-fit border-solid ${frameVisible ? `${grabCursor} ${liftClass(frameVisible)}` : ""}`}
+        style={frameStyle}
+        data-canvas-content={frameVisible || undefined}
+        {...(frameVisible ? draggable : {})}
+      >
         {/* A size container, so the art box below can fit itself with container units. */}
         <div className="fit-container absolute inset-0" style={{ transform: preview.transform }}>
           {/* The art box: the whole artwork fitted inside the frame (contain) —
@@ -127,7 +153,10 @@ export function IllustrationFrame({ imageUrl, vectorUrl, prompt, editState, zoom
               outline is never cut either. Same maths as placeArt() in the exports. */}
           <div
             data-canvas-content={(!frameVisible && !showOutline) || undefined}
-            className="absolute top-1/2 left-1/2 -translate-1/2"
+            {...draggable}
+            className={`absolute top-1/2 left-1/2 -translate-1/2 transition-[filter] duration-150 ease-out ${grabCursor} ${liftClass(
+              !frameVisible && !showOutline,
+            )}`}
             style={{
               width: `calc(min(100cqw, 100cqh * ${stickerAspect}) * ${artSize.width / stickerWidth})`,
               aspectRatio: `${artSize.width} / ${artSize.height}`,
@@ -140,9 +169,10 @@ export function IllustrationFrame({ imageUrl, vectorUrl, prompt, editState, zoom
               <div
                 aria-hidden="true"
                 data-canvas-content={(!frameVisible && showOutline) || undefined}
-                className={`pointer-events-none absolute transition-opacity duration-150 ease-out ${
-                  showOutline && loaded ? "opacity-100" : "opacity-0"
-                }`}
+                {...(showOutline ? draggable : {})}
+                className={`absolute transition-[opacity,filter] duration-150 ease-out ${
+                  showOutline && loaded ? `opacity-100 ${grabCursor}` : "pointer-events-none opacity-0"
+                } ${liftClass(!frameVisible && showOutline)}`}
                 style={{
                   left: `${(-outline.pad / outline.artWidth) * 100}%`,
                   right: `${(-outline.pad / outline.artWidth) * 100}%`,

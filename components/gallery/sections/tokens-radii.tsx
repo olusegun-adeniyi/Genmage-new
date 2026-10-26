@@ -17,6 +17,7 @@ const SHADOW_USAGE: Record<keyof typeof shadows, string> = {
   menu: "Aspect menu — the only elevated surface",
   swatch: "Colour swatch edge",
   fieldFocus: "Slider + prompt box focus",
+  illustrationLift: "Illustration on hover/drag (drop-shadow filter, follows its shape)",
 };
 
 export function TokensRadiiSection() {

@@ -117,6 +117,10 @@ export const shadows = {
   menu: "inset 0 0 0 1px var(--color-border), 0 8px 24px var(--menu-drop)", // the only real shadow in the system
   swatch: "inset 0 0 0 1px var(--swatch-edge)", // keeps a swatch matching its row visible
   fieldFocus: "inset 0 0 0 1px var(--color-tick)", // focus on grey fields — slider, prompt box
+  // A drop-shadow *filter* (follows the artwork's alpha, not its box), shown only
+  // while the illustration is hovered or dragged — the "you can pick this up"
+  // cue. Fixed colour: the canvas is white in both themes.
+  illustrationLift: "0 8px 20px rgba(24, 24, 24, 0.16)",
 } as const;
 
 export const spacing = {

@@ -53,6 +53,8 @@
   --shadow-menu: inset 0 0 0 1px var(--color-border), 0 8px 24px var(--menu-drop);
   --shadow-swatch: inset 0 0 0 1px var(--swatch-edge);
   --shadow-field-focus: inset 0 0 0 1px var(--color-tick);
+  /* tokens.shadows.illustrationLift — a drop-shadow filter (drop-shadow-illustration-lift). */
+  --drop-shadow-illustration-lift: 0 8px 20px rgba(24, 24, 24, 0.16);
 
   /* Named layout dimensions — tokens.spacing. Everything else uses Tailwind's
      own 4px scale (gap-2, p-3.5, h-8…). */
