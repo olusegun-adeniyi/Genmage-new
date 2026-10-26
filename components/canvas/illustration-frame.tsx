@@ -4,8 +4,10 @@ import NextImage from "next/image";
 import type { CSSProperties } from "react";
 import { useEffect, useState } from "react";
 
+import { motion } from "@/design/tokens";
 import { getCutout } from "@/lib/client/cutout";
 import { getWrapOutline } from "@/lib/client/wrap-outline";
+import type { CanvasZoom } from "@/lib/hooks/use-canvas-zoom";
 import { previewStyle } from "@/lib/edit/preview-style";
 import type { EditState } from "@/lib/validation/edit-state";
 
@@ -14,11 +16,12 @@ type IllustrationFrameProps = {
   vectorUrl?: string;
   prompt: string;
   editState: EditState;
+  zoom: CanvasZoom; // view zoom/pan — owned by CanvasPanel so its control can sit by the theme toggle
 };
 
 // Keyed by imageUrl at the call site — a fresh mount per image gives each result
 // its own fade-in (and cutout lookup) without effects to reset state.
-export function IllustrationFrame({ imageUrl, vectorUrl, prompt, editState }: IllustrationFrameProps) {
+export function IllustrationFrame({ imageUrl, vectorUrl, prompt, editState, zoom }: IllustrationFrameProps) {
   // Flat styles render their vector directly — it's already background-free,
   // so the in-browser paper removal is only for raster styles.
   const [artworkSrc, setArtworkSrc] = useState<string | null>(vectorUrl ?? null);
@@ -26,6 +29,7 @@ export function IllustrationFrame({ imageUrl, vectorUrl, prompt, editState }: Il
   const [outlineSrc, setOutlineSrc] = useState<string | null>(null);
   const preview = previewStyle(editState);
   const wrapOutline = editState.wrapOutline;
+  const { view, animate, canPan, dragging, attachArea, panHandlers } = zoom;
 
   useEffect(() => {
     if (vectorUrl) return;
@@ -62,6 +66,11 @@ export function IllustrationFrame({ imageUrl, vectorUrl, prompt, editState }: Il
     // Proportional to the frame width (the same min() the aspect-fit utility uses
     // for the width), so the border matches the export at any screen size.
     borderWidth: `calc(${preview.borderFraction} * min(100cqw, 100cqh * ${preview.ratio}))`,
+    // View zoom/pan sits on the whole frame (border and background included) and
+    // never touches the edit state or the export.
+    transform: `translate(${view.x}px, ${view.y}px) scale(${view.zoom})`,
+    // Buttons glide (default motion); gestures track the input directly.
+    transition: animate ? `transform ${motion.durationDefault} ${motion.easingDefault}` : "none",
   } as CSSProperties;
 
   // The colour overlays are full rectangles — masked to the cutout's alpha so
@@ -83,7 +92,15 @@ export function IllustrationFrame({ imageUrl, vectorUrl, prompt, editState }: Il
     : undefined;
 
   return (
-    <div className="fit-container absolute inset-x-3 top-canvas-image-top-compact bottom-canvas-image-bottom-compact flex items-center justify-center lg:top-canvas-image-top lg:right-canvas-image-right lg:bottom-canvas-image-bottom lg:left-4">
+    // overflow-hidden: zoomed in, the illustration is clipped to its area so it
+    // never slides under the Adjustments panel or the action bar.
+    <div
+      ref={attachArea}
+      {...panHandlers}
+      className={`fit-container absolute inset-x-3 top-canvas-image-top-compact bottom-canvas-image-bottom-compact flex items-center justify-center overflow-hidden select-none lg:top-canvas-image-top lg:right-canvas-image-right lg:bottom-canvas-image-bottom lg:left-4 ${
+        canPan ? `touch-none ${dragging ? "cursor-grabbing" : "cursor-grab"}` : ""
+      }`}
+    >
       <div className="relative aspect-fit overflow-hidden border-solid" style={frameStyle}>
         <div className="absolute inset-0" style={{ transform: preview.transform }}>
           {/* The sticker edge sits behind the artwork and outside its colour

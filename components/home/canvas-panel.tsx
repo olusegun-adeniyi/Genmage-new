@@ -2,10 +2,12 @@ import type { ReactNode, Ref } from "react";
 
 import { ActionBar } from "@/components/canvas/action-bar";
 import { IllustrationFrame } from "@/components/canvas/illustration-frame";
+import { ZoomControl } from "@/components/canvas/zoom-control";
 import { MountainsIcon } from "@/components/ui/icons";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
+import { useCanvasZoom } from "@/lib/hooks/use-canvas-zoom";
 import type { HistoryItem } from "@/lib/hooks/use-history";
-import { DEFAULT_EDIT_STATE, type AspectRatio } from "@/lib/validation/edit-state";
+import { ASPECT_VALUES, DEFAULT_EDIT_STATE, type AspectRatio } from "@/lib/validation/edit-state";
 
 type CanvasPanelProps = {
   ref?: Ref<HTMLElement>;
@@ -35,6 +37,9 @@ export function CanvasPanel({
   controls,
 }: CanvasPanelProps) {
   const showImage = generation !== null && !isGenerating;
+  // Each illustration opens fitted; the aspect ratio sizes the frame for pan limits.
+  const aspectRatio = generation?.editState.aspectRatio ?? DEFAULT_EDIT_STATE.aspectRatio;
+  const zoom = useCanvasZoom(showImage ? generation.imageUrl : null, ASPECT_VALUES[aspectRatio]);
   const status = isGenerating
     ? `Generating ${generatingStyleName.toLowerCase()} illustration…`
     : showImage
@@ -52,8 +57,15 @@ export function CanvasPanel({
     >
       <div className="relative aspect-4/5 overflow-hidden rounded-2xl border border-border bg-canvas sm:aspect-square lg:absolute lg:inset-0 lg:aspect-auto lg:rounded-none lg:border-0 lg:bg-transparent">
         {/* Top-left corner; the illustration area starts below it (canvasImageTop). */}
-        <div className="absolute top-3 left-3 z-10 lg:top-4 lg:left-4">
+        <div className="absolute top-3 left-3 z-10 flex gap-2 lg:top-4 lg:left-4">
           <ThemeToggle />
+          <ZoomControl
+            zoom={zoom.view.zoom}
+            disabled={!showImage}
+            onZoomOut={zoom.zoomOut}
+            onZoomIn={zoom.zoomIn}
+            onReset={zoom.reset}
+          />
         </div>
         {showImage && (
           <IllustrationFrame
@@ -62,6 +74,7 @@ export function CanvasPanel({
             vectorUrl={generation.vectorUrl}
             prompt={generation.prompt}
             editState={generation.editState}
+            zoom={zoom}
           />
         )}
         {/* Centred in the illustration area, not the whole canvas. The status line
@@ -76,7 +89,7 @@ export function CanvasPanel({
         </div>
         <ActionBar
           hasGeneration={showImage}
-          aspectRatio={generation?.editState.aspectRatio ?? DEFAULT_EDIT_STATE.aspectRatio}
+          aspectRatio={aspectRatio}
           onAspectChange={onAspectChange}
           shareCopied={shareCopied}
           onShare={onShare}

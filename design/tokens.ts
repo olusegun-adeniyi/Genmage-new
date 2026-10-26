@@ -181,6 +181,16 @@ export const wrapOutline = {
   shadowOpacity: 0.18,
 } as const;
 
+// Canvas zoom — a view setting, never part of the edit state or the export.
+// 1 = the illustration fitted to the canvas (shown as 100%).
+export const canvasZoom = {
+  min: 0.1, // 10% — room to see the whole frame small
+  max: 8, // 800% — past the 1024px source detail, but people inspect edges up close
+  buttonFactor: 1.25, // each − / + press
+  wheelSensitivity: 0.0025, // Ctrl/⌘-wheel and trackpad pinch: zoom ×e^(−deltaY × this)
+  minVisiblePx: 64, // panning always leaves at least this much of the illustration on screen
+} as const;
+
 export const slider = {
   // Fill width = fillMin + pct × (trackWidth − fillMin): a 10px stub stays visible
   // at value=min so the handle never disappears.
