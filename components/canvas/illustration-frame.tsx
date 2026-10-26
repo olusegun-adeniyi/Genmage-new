@@ -32,7 +32,7 @@ export function IllustrationFrame({ imageUrl, vectorUrl, prompt, editState, zoom
   const [artSize, setArtSize] = useState({ width: 1, height: 1 });
   const preview = previewStyle(editState);
   const wrapOutline = editState.wrapOutline;
-  const { view, animate, canPan, dragging, attachArea, panHandlers } = zoom;
+  const { view, animate, canPan, touchPans, dragging, attachArea, panHandlers } = zoom;
 
   useEffect(() => {
     if (vectorUrl) return;
@@ -109,7 +109,8 @@ export function IllustrationFrame({ imageUrl, vectorUrl, prompt, editState, zoom
       ref={attachArea}
       {...panHandlers}
       className={`fit-container absolute inset-x-3 top-canvas-image-top-compact bottom-canvas-image-bottom-compact flex items-center justify-center select-none lg:top-canvas-image-top lg:right-canvas-image-right lg:bottom-canvas-image-bottom lg:left-4 ${
-        canPan ? `touch-none ${dragging ? "cursor-grabbing" : "cursor-grab"}` : ""
+        canPan ? (dragging ? "cursor-grabbing" : "cursor-grab") : ""
+      } ${touchPans ? "touch-none" : ""}
       }`}
     >
       <div className="relative aspect-fit border-solid" style={frameStyle}>

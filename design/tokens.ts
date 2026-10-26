@@ -188,7 +188,6 @@ export const canvasZoom = {
   max: 8, // 800% — past the 1024px source detail, but people inspect edges up close
   buttonFactor: 1.25, // each − / + press
   wheelSensitivity: 0.0025, // Ctrl/⌘-wheel and trackpad pinch: zoom ×e^(−deltaY × this)
-  minVisiblePx: 64, // panning always leaves at least this much of the illustration on screen
 } as const;
 
 export const slider = {

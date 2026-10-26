@@ -15,26 +15,39 @@ const isGestureEvent = (event: Event): event is GestureEventLike => "scale" in e
 
 const clampZoom = (zoom: number) => Math.min(canvasZoom.max, Math.max(canvasZoom.min, zoom));
 
+// Pan range on one axis. The frame (size `size`, resting centre `rest`) stays
+// inside the canvas [start, end] when it fits; when it's bigger, it keeps the
+// canvas covered — either way the illustration never leaves the canvas.
+function panRange(rest: number, size: number, start: number, end: number): [number, number] {
+  const insideMin = start - rest + size / 2; // frame's leading edge on the canvas's
+  const insideMax = end - rest - size / 2; // trailing edge on the canvas's
+  return insideMin <= insideMax ? [insideMin, insideMax] : [insideMax, insideMin];
+}
+
 /**
- * Keeps at least minVisiblePx of the illustration inside the area, whatever the
- * pan. The frame is the aspect-fit box — the same min() the aspect-fit utility uses.
+ * Keeps the illustration within the canvas, whatever the pan or zoom. The
+ * frame is the aspect-fit box centred in the area (the same min() the aspect-fit
+ * utility uses), scaled by the zoom.
  */
-function clampPan(view: CanvasView, area: DOMRect, ratio: number): CanvasView {
+function clampPan(view: CanvasView, area: DOMRect, canvas: DOMRect, ratio: number): CanvasView {
   const frameWidth = Math.min(area.width, area.height * ratio) * view.zoom;
   const frameHeight = frameWidth / ratio;
-  const limitX = Math.max(0, (frameWidth + area.width) / 2 - canvasZoom.minVisiblePx);
-  const limitY = Math.max(0, (frameHeight + area.height) / 2 - canvasZoom.minVisiblePx);
+  const [minX, maxX] = panRange(area.left + area.width / 2, frameWidth, canvas.left, canvas.right);
+  const [minY, maxY] = panRange(area.top + area.height / 2, frameHeight, canvas.top, canvas.bottom);
   return {
     zoom: view.zoom,
-    x: Math.min(limitX, Math.max(-limitX, view.x)),
-    y: Math.min(limitY, Math.max(-limitY, view.y)),
+    x: Math.min(maxX, Math.max(minX, view.x)),
+    y: Math.min(maxY, Math.max(minY, view.y)),
   };
 }
 
-// Zoom by `factor` keeping the point under (clientX, clientY) fixed on screen.
+// Zooming in keeps the point under (clientX, clientY) fixed on screen. Zooming
+// out shrinks the pan with the zoom instead, so it undoes that drift: zoom in on
+// a corner, zoom back out, and the illustration returns to where it was.
 function zoomAround(view: CanvasView, factor: number, area: DOMRect, clientX: number, clientY: number): CanvasView {
   const zoom = clampZoom(view.zoom * factor);
   const applied = zoom / view.zoom;
+  if (applied < 1) return { zoom, x: view.x * applied, y: view.y * applied };
   const px = clientX - (area.left + area.width / 2);
   const py = clientY - (area.top + area.height / 2);
   return { zoom, x: px - (px - view.x) * applied, y: py - (py - view.y) * applied };
@@ -62,8 +75,14 @@ export function useCanvasZoom(resetKey: string | null, ratio: number) {
 
   const commit = useCallback(
     (next: CanvasView, animated: boolean) => {
+      // The canvas is the area's positioned parent (the stage the area is inset in).
       const bounds = area?.getBoundingClientRect();
-      setState({ key: keyRef.current, view: bounds ? clampPan(next, bounds, ratioRef.current) : next, animate: animated });
+      const canvas = area?.parentElement?.getBoundingClientRect();
+      setState({
+        key: keyRef.current,
+        view: bounds && canvas ? clampPan(next, bounds, canvas, ratioRef.current) : next,
+        animate: animated,
+      });
     },
     [area],
   );
@@ -117,14 +136,17 @@ export function useCanvasZoom(resetKey: string | null, ratio: number) {
     };
   }, [area, commit]);
 
-  // Drag to pan, only while zoomed in — at fit a click is just a click.
+  // Drag moves the illustration around the canvas at any zoom. On touch, only
+  // while zoomed in: at fit a finger on the canvas still scrolls the page.
   const drag = useRef<{ pointerId: number; x: number; y: number } | null>(null);
   const [dragging, setDragging] = useState(false);
-  const canPan = view.zoom > 1;
+  const canPan = resetKey !== null;
+  const touchPans = view.zoom > 1;
 
   const onPointerDown = useCallback(
     (event: ReactPointerEvent<HTMLDivElement>) => {
-      if (viewRef.current.zoom <= 1 || event.button !== 0) return;
+      if (keyRef.current === null || event.button !== 0) return;
+      if (event.pointerType === "touch" && viewRef.current.zoom <= 1) return;
       event.preventDefault(); // no native image drag or text selection while panning
       event.currentTarget.setPointerCapture(event.pointerId);
       drag.current = { pointerId: event.pointerId, x: event.clientX, y: event.clientY };
@@ -152,6 +174,7 @@ export function useCanvasZoom(resetKey: string | null, ratio: number) {
     view,
     animate,
     canPan,
+    touchPans,
     dragging,
     attachArea: setArea, // callback ref for the illustration area
     panHandlers: { onPointerDown, onPointerMove, onPointerUp, onPointerCancel: onPointerUp },
