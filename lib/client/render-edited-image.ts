@@ -1,5 +1,6 @@
 import { applyColorFilters } from "@/lib/edit/color-filters";
 import { coverFit, exportFrame } from "@/lib/edit/export-frame";
+import type { WrapOutlineLayer } from "@/lib/client/wrap-outline";
 import { overlayLayers } from "@/lib/edit/fill-colour";
 import { previewStyle } from "@/lib/edit/preview-style";
 import type { EditState } from "@/lib/validation/edit-state";
@@ -36,7 +37,11 @@ function drawCover(context: CanvasRenderingContext2D, image: HTMLImageElement, w
  * cover-cropped inside the border, colour-filtered, overlay-tinted (masked to
  * the illustration's alpha), rotated about its centre, clipped to the frame.
  */
-export async function renderEditedImage(imageSrc: string, editState: EditState, outlineSrc?: string | null): Promise<Blob> {
+export async function renderEditedImage(
+  imageSrc: string,
+  editState: EditState,
+  outline?: WrapOutlineLayer | null,
+): Promise<Blob> {
   const style = previewStyle(editState);
   const image = await loadImage(imageSrc);
 
@@ -71,10 +76,20 @@ export async function renderEditedImage(imageSrc: string, editState: EditState, 
 
   // The wrap outline goes underneath, after the colour work, so it stays white —
   // the same layering as the preview.
-  if (outlineSrc) {
-    const outline = await loadImage(outlineSrc);
+  // The outline layer is the artwork plus `pad` on each side: place it on the
+  // artwork's cover box, grown by the same pad at the same scale.
+  if (outline) {
+    const outlineImage = await loadImage(outline.src);
+    const fit = coverFit(outline.artWidth, outline.artHeight, innerWidth, innerHeight);
+    const pad = outline.pad * fit.scale;
     layer.context.globalCompositeOperation = "destination-over";
-    drawCover(layer.context, outline, innerWidth, innerHeight);
+    layer.context.drawImage(
+      outlineImage,
+      fit.x - pad,
+      fit.y - pad,
+      outline.artWidth * fit.scale + pad * 2,
+      outline.artHeight * fit.scale + pad * 2,
+    );
     layer.context.globalCompositeOperation = "source-over";
   }
 

@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 
 import { motion } from "@/design/tokens";
 import { getCutout } from "@/lib/client/cutout";
-import { getWrapOutline } from "@/lib/client/wrap-outline";
+import { getWrapOutline, type WrapOutlineLayer } from "@/lib/client/wrap-outline";
 import type { CanvasZoom } from "@/lib/hooks/use-canvas-zoom";
 import { previewStyle } from "@/lib/edit/preview-style";
 import type { EditState } from "@/lib/validation/edit-state";
@@ -26,7 +26,7 @@ export function IllustrationFrame({ imageUrl, vectorUrl, prompt, editState, zoom
   // so the in-browser paper removal is only for raster styles.
   const [artworkSrc, setArtworkSrc] = useState<string | null>(vectorUrl ?? null);
   const [loaded, setLoaded] = useState(false);
-  const [outlineSrc, setOutlineSrc] = useState<string | null>(null);
+  const [outline, setOutline] = useState<WrapOutlineLayer | null>(null);
   const preview = previewStyle(editState);
   const wrapOutline = editState.wrapOutline;
   const { view, animate, canPan, dragging, attachArea, panHandlers } = zoom;
@@ -45,15 +45,15 @@ export function IllustrationFrame({ imageUrl, vectorUrl, prompt, editState, zoom
   // Built on first use, then kept: toggling off just fades it out, so toggling
   // back on is instant (the outline itself is cached per artwork).
   useEffect(() => {
-    if (!wrapOutline || !artworkSrc || outlineSrc) return;
+    if (!wrapOutline || !artworkSrc || outline) return;
     let cancelled = false;
-    getWrapOutline(artworkSrc).then((src) => {
-      if (!cancelled) setOutlineSrc(src);
+    getWrapOutline(artworkSrc).then((layer) => {
+      if (!cancelled) setOutline(layer);
     });
     return () => {
       cancelled = true;
     };
-  }, [wrapOutline, artworkSrc, outlineSrc]);
+  }, [wrapOutline, artworkSrc, outline]);
 
   // --ratio feeds the aspect-fit utility (globals.css); the rest is user edit
   // data, not design tokens, so it's applied inline. With the paper removed, the
@@ -92,30 +92,39 @@ export function IllustrationFrame({ imageUrl, vectorUrl, prompt, editState, zoom
     : undefined;
 
   return (
-    // overflow-hidden: zoomed in, the illustration is clipped to its area so it
-    // never slides under the Adjustments panel or the action bar.
+    // Nothing here clips: zoomed in, the illustration spreads across the whole
+    // canvas (under the floating panels, like a design tool), and a wrap outline
+    // can run past the frame's edge.
     <div
       ref={attachArea}
       {...panHandlers}
-      className={`fit-container absolute inset-x-3 top-canvas-image-top-compact bottom-canvas-image-bottom-compact flex items-center justify-center overflow-hidden select-none lg:top-canvas-image-top lg:right-canvas-image-right lg:bottom-canvas-image-bottom lg:left-4 ${
+      className={`fit-container absolute inset-x-3 top-canvas-image-top-compact bottom-canvas-image-bottom-compact flex items-center justify-center select-none lg:top-canvas-image-top lg:right-canvas-image-right lg:bottom-canvas-image-bottom lg:left-4 ${
         canPan ? `touch-none ${dragging ? "cursor-grabbing" : "cursor-grab"}` : ""
       }`}
     >
-      <div className="relative aspect-fit overflow-hidden border-solid" style={frameStyle}>
-        <div className="absolute inset-0" style={{ transform: preview.transform }}>
+      <div className="relative aspect-fit border-solid" style={frameStyle}>
+        {/* A size container, so the outline below can size itself against the
+            artwork's cover box with container units. */}
+        <div className="fit-container absolute inset-0" style={{ transform: preview.transform }}>
           {/* The sticker edge sits behind the artwork and outside its colour
-              filter and overlays, so edits never tint it. Same box and fit as the
-              artwork, and the same pixel size, so it lines up exactly. */}
-          {outlineSrc && (
-            <NextImage
-              src={outlineSrc}
-              alt=""
-              fill
-              unoptimized // a local blob URL
-              className={`object-cover transition-opacity duration-150 ease-out ${
+              filter and overlays, so edits never tint it. It's the artwork plus
+              `pad` on every side: centred on the artwork's object-cover box
+              (max(100cqw, 100cqh × aspect)) and grown by the same pad. */}
+          {outline && (
+            <div
+              aria-hidden="true"
+              className={`pointer-events-none absolute top-1/2 left-1/2 -translate-1/2 transition-opacity duration-150 ease-out ${
                 wrapOutline && loaded ? "opacity-100" : "opacity-0"
               }`}
-            />
+              style={{
+                width: `calc(max(100cqw, 100cqh * ${outline.artWidth / outline.artHeight}) * ${
+                  (outline.artWidth + outline.pad * 2) / outline.artWidth
+                })`,
+                aspectRatio: `${outline.artWidth + outline.pad * 2} / ${outline.artHeight + outline.pad * 2}`,
+              }}
+            >
+              <NextImage src={outline.src} alt="" fill unoptimized className="object-fill" />
+            </div>
           )}
           {artworkSrc && (
             <NextImage

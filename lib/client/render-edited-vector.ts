@@ -14,26 +14,14 @@ function svgElement(document: XMLDocument, name: string, attributes: Record<stri
 
 /**
  * The wrap outline as real vector geometry: the subject's traced silhouette,
- * filled (so interior gaps close, like a die-cut sticker) and stroked white at
+ * filled (so interior gaps close, like a die-cut sticker) and stroked at
  * twice the outline width with round joins — the stroke's outer half is the
- * edge. Same proportions as the raster outline (tokens.wrapOutline), plus its
- * soft shadow as an feDropShadow. Null for full-bleed art (no silhouette).
+ * edge. Same proportions and colour as the raster outline (tokens.wrapOutline).
+ * Null for full-bleed art (no silhouette).
  */
 function wrapOutlineGroup(document: XMLDocument, defs: Element, sourceWidth: number): Element | null {
   const silhouette = Array.from(defs.querySelectorAll("clipPath#subject > path"));
   if (silhouette.length === 0) return null;
-
-  const shadow = svgElement(document, "filter", { id: "wrap-shadow", x: "-10%", y: "-10%", width: "120%", height: "120%" });
-  shadow.appendChild(
-    svgElement(document, "feDropShadow", {
-      dx: 0,
-      dy: wrapOutline.shadowOffsetFraction * sourceWidth,
-      stdDeviation: wrapOutline.shadowBlurFraction * sourceWidth,
-      "flood-color": colors.wrapOutlineShadow,
-      "flood-opacity": wrapOutline.shadowOpacity,
-    }),
-  );
-  defs.appendChild(shadow);
 
   const group = svgElement(document, "g", {
     id: "wrap-outline",
@@ -42,7 +30,6 @@ function wrapOutlineGroup(document: XMLDocument, defs: Element, sourceWidth: num
     "stroke-width": wrapOutline.widthFraction * sourceWidth * 2,
     "stroke-linejoin": "round",
     "stroke-linecap": "round",
-    filter: "url(#wrap-shadow)",
   });
   for (const path of silhouette) {
     group.appendChild(

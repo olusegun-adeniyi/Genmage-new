@@ -1,10 +1,9 @@
 import { colors, wrapOutline } from "@/design/tokens";
 
-// Builds the die-cut sticker edge for a transparent cutout: a thick white
+// Builds the die-cut sticker edge for a transparent cutout: a thick, flat
 // silhouette that follows the illustration's outer shape, with interior gaps
-// filled (a sticker is one piece) and a soft shadow so the white edge reads on
-// a white canvas. Returned as its own RGBA layer, drawn *behind* the artwork, so
-// colour edits never tint it.
+// filled (a sticker is one piece). Returned as its own RGBA layer, drawn
+// *behind* the artwork, so colour edits never tint it.
 
 const INF = 1e20;
 
@@ -87,39 +86,26 @@ function fillHoles(mask: Uint8Array, width: number, height: number) {
   for (let i = 0; i < mask.length; i++) if (!outside[i]) mask[i] = 1;
 }
 
-// Three box blurs ≈ a Gaussian; separable, so it stays linear in pixel count.
-function boxBlur(values: Float32Array, width: number, height: number, radius: number) {
-  if (radius < 1) return;
-  const temp = new Float32Array(values.length);
-  const pass = (src: Float32Array, dst: Float32Array, horizontal: boolean) => {
-    const lines = horizontal ? height : width;
-    const length = horizontal ? width : height;
-    const step = horizontal ? 1 : width;
-    for (let line = 0; line < lines; line++) {
-      const start = horizontal ? line * width : line;
-      let sum = 0;
-      for (let i = -radius; i <= radius; i++) sum += src[start + Math.min(length - 1, Math.max(0, i)) * step];
-      for (let i = 0; i < length; i++) {
-        dst[start + i * step] = sum / (radius * 2 + 1);
-        const add = Math.min(length - 1, i + radius + 1);
-        const drop = Math.max(0, i - radius);
-        sum += src[start + add * step] - src[start + drop * step];
-      }
-    }
-  };
-  for (let i = 0; i < 3; i++) {
-    pass(values, temp, true);
-    pass(temp, values, false);
-  }
-}
-
 const hexChannel = (hex: string, offset: number) => parseInt(hex.slice(offset, offset + 2), 16);
 
+/** Outline thickness and corner rounding in px, for an artwork `artWidth` wide. */
+export function wrapOutlineSize(artWidth: number) {
+  return { radius: wrapOutline.widthFraction * artWidth, smooth: wrapOutline.smoothFraction * artWidth };
+}
+
 /**
- * Cutout RGBA (unpremultiplied) → the outline layer's RGBA, same size. Returns
- * null when there's nothing to outline (no transparent margin around the art).
+ * Cutout RGBA (unpremultiplied) → the outline layer's RGBA, same size. The
+ * caller pads the canvas by at least `radius` so the outline is never cut at
+ * the image edge. Returns null when there's nothing to outline — no art, or art
+ * covering every one of the `artPixelArea` source pixels (no paper removed).
  */
-export function buildWrapOutline(rgba: Uint8ClampedArray, width: number, height: number): Uint8ClampedArray | null {
+export function buildWrapOutline(
+  rgba: Uint8ClampedArray,
+  width: number,
+  height: number,
+  { radius, smooth }: { radius: number; smooth: number },
+  artPixelArea: number,
+): Uint8ClampedArray | null {
   const pixelCount = width * height;
   const art = new Uint8Array(pixelCount);
   let artPixels = 0;
@@ -129,11 +115,7 @@ export function buildWrapOutline(rgba: Uint8ClampedArray, width: number, height:
       artPixels++;
     }
   }
-  // Fully opaque (no paper removed) or empty: an outline would be invisible or meaningless.
-  if (artPixels === 0 || artPixels === pixelCount) return null;
-
-  const radius = wrapOutline.widthFraction * width;
-  const smooth = wrapOutline.smoothFraction * width;
+  if (artPixels === 0 || artPixels >= artPixelArea) return null;
 
   // 1. Grow past the outline width by `smooth`, and fill interior gaps.
   const toArt = squaredDistanceTo(art, width, height);
@@ -146,32 +128,17 @@ export function buildWrapOutline(rgba: Uint8ClampedArray, width: number, height:
   const empty = new Uint8Array(pixelCount);
   for (let i = 0; i < pixelCount; i++) empty[i] = grown[i] ? 0 : 1;
   const toEmpty = squaredDistanceTo(empty, width, height);
-  const outline = new Float32Array(pixelCount);
-  for (let i = 0; i < pixelCount; i++) outline[i] = Math.min(1, Math.max(0, Math.sqrt(toEmpty[i]) - smooth + 0.5));
 
-  // 3. Shadow: the outline blurred, nudged down, faint.
-  const shadow = new Float32Array(pixelCount);
-  const offset = Math.round(wrapOutline.shadowOffsetFraction * height);
-  for (let y = 0; y < height; y++) {
-    const sourceY = y - offset;
-    if (sourceY < 0 || sourceY >= height) continue;
-    shadow.set(outline.subarray(sourceY * width, sourceY * width + width), y * width);
-  }
-  boxBlur(shadow, width, height, Math.round(wrapOutline.shadowBlurFraction * width));
-
-  // 4. Composite: white outline over its shadow.
-  const [lr, lg, lb] = [1, 3, 5].map((o) => hexChannel(colors.wrapOutline, o));
-  const [sr, sg, sb] = [1, 3, 5].map((o) => hexChannel(colors.wrapOutlineShadow, o));
+  // 3. Flat outline colour, no shadow.
+  const [r, g, b] = [1, 3, 5].map((o) => hexChannel(colors.wrapOutline, o));
   const out = new Uint8ClampedArray(pixelCount * 4);
   for (let i = 0; i < pixelCount; i++) {
-    const line = outline[i];
-    const shade = shadow[i] * wrapOutline.shadowOpacity * (1 - line);
-    const alpha = line + shade;
-    if (alpha <= 0) continue;
-    out[i * 4] = (lr * line + sr * shade) / alpha;
-    out[i * 4 + 1] = (lg * line + sg * shade) / alpha;
-    out[i * 4 + 2] = (lb * line + sb * shade) / alpha;
-    out[i * 4 + 3] = alpha * 255;
+    const coverage = Math.min(1, Math.max(0, Math.sqrt(toEmpty[i]) - smooth + 0.5));
+    if (coverage <= 0) continue;
+    out[i * 4] = r;
+    out[i * 4 + 1] = g;
+    out[i * 4 + 2] = b;
+    out[i * 4 + 3] = coverage * 255;
   }
   return out;
 }

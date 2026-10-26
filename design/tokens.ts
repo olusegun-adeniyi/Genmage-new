@@ -48,9 +48,9 @@ export const colors = {
   editHighlight: "#ffffff", // Highlight
 
   // Wrap outline (die-cut sticker edge around the illustration). Illustration
-  // only, like the overlays above — identical in both themes.
-  wrapOutline: "#ffffff", // the outline itself
-  wrapOutlineShadow: "#181818", // its soft shadow — what makes a white edge read on the white canvas
+  // only, like the overlays above — identical in both themes. A hair off white
+  // so the edge still reads on the white canvas without a shadow.
+  wrapOutline: "#f7f7f7",
 } as const;
 
 // Dark theme (<html data-theme="dark">, set by the canvas toggle). Same keys as
@@ -87,8 +87,7 @@ export const darkColors: Record<keyof typeof colors, string> = {
   editTint: "#ff2d9b",
   editHighlight: "#ffffff",
 
-  wrapOutline: "#ffffff", // illustration treatment — doesn't change with the UI theme
-  wrapOutlineShadow: "#181818",
+  wrapOutline: "#f7f7f7", // illustration treatment — doesn't change with the UI theme
 };
 
 // Theme-dependent values that aren't colour utilities (CSS vars in globals.css).
@@ -176,9 +175,6 @@ export const wrapOutline = {
   widthFraction: 0.024, // outline thickness — ~25px on a 1024px image, a chunky sticker edge
   smoothFraction: 0.012, // rounds the outline's inner corners (dilate further, then erode back)
   alphaThreshold: 96, // cutout alpha (0–255) that counts as illustration — ignores soft watercolour fringes
-  shadowBlurFraction: 0.01, // soft, close shadow
-  shadowOffsetFraction: 0.004, // nudged down, as if lit from above
-  shadowOpacity: 0.18,
 } as const;
 
 // Canvas zoom — a view setting, never part of the edit state or the export.
