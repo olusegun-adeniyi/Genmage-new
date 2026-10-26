@@ -10,7 +10,7 @@ const GROUPS: { label: string; tokens: ColorToken[] }[] = [
   { label: "Primary", tokens: ["primary", "primaryForeground"] },
   { label: "Status", tokens: ["danger"] },
   { label: "Preview overlays (illustration only)", tokens: ["editWarm", "editTint", "editHighlight"] },
-  { label: "Wrap outline (illustration only)", tokens: ["wrapOutline"] },
+  { label: "Wrap outline (illustration only)", tokens: ["wrapOutline", "wrapOutlineEdge"] },
 ];
 
 const USAGE: Record<ColorToken, string> = {
@@ -37,6 +37,7 @@ const USAGE: Record<ColorToken, string> = {
   editTint: "Tint overlay",
   editHighlight: "Highlight overlay",
   wrapOutline: "Die-cut sticker edge around the illustration",
+  wrapOutlineEdge: "Hairline on the sticker edge's outer rim",
 };
 
 export function TokensColorsSection() {

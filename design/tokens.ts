@@ -48,9 +48,11 @@ export const colors = {
   editHighlight: "#ffffff", // Highlight
 
   // Wrap outline (die-cut sticker edge around the illustration). Illustration
-  // only, like the overlays above — identical in both themes. A hair off white
-  // so the edge still reads on the white canvas without a shadow.
+  // only, like the overlays above — identical in both themes. Flat, no shadow:
+  // a hairline on its outer edge is what separates it from the white canvas
+  // (same grey as the panel borders — borders, not shadows).
   wrapOutline: "#f7f7f7",
+  wrapOutlineEdge: "#eaeaea",
 } as const;
 
 // Dark theme (<html data-theme="dark">, set by the canvas toggle). Same keys as
@@ -88,6 +90,7 @@ export const darkColors: Record<keyof typeof colors, string> = {
   editHighlight: "#ffffff",
 
   wrapOutline: "#f7f7f7", // illustration treatment — doesn't change with the UI theme
+  wrapOutlineEdge: "#eaeaea",
 };
 
 // Theme-dependent values that aren't colour utilities (CSS vars in globals.css).
@@ -174,6 +177,7 @@ export const motion = {
 export const wrapOutline = {
   widthFraction: 0.024, // outline thickness — ~25px on a 1024px image, a chunky sticker edge
   smoothFraction: 0.012, // rounds the outline's inner corners (dilate further, then erode back)
+  edgeFraction: 0.0016, // the hairline on the outer edge — ~1.6px on a 1024px image, ~1px on screen
   alphaThreshold: 96, // cutout alpha (0–255) that counts as illustration — ignores soft watercolour fringes
 } as const;
 

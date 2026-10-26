@@ -17,25 +17,30 @@ function svgElement(document: XMLDocument, name: string, attributes: Record<stri
  * The wrap outline as real vector geometry: the subject's traced silhouette,
  * filled (so interior gaps close, like a die-cut sticker) and stroked at
  * twice the outline width with round joins — the stroke's outer half is the
- * edge. Same proportions and colour as the raster outline (tokens.wrapOutline).
+ * edge — with a hairline rim. Same proportions and colours as the raster
+ * outline (tokens.wrapOutline).
  * Null for full-bleed art (no silhouette).
  */
 function wrapOutlineGroup(document: XMLDocument, defs: Element, sourceWidth: number): Element | null {
   const silhouette = Array.from(defs.querySelectorAll("clipPath#subject > path"));
   if (silhouette.length === 0) return null;
 
-  const group = svgElement(document, "g", {
-    id: "wrap-outline",
-    fill: colors.wrapOutline,
-    stroke: colors.wrapOutline,
-    "stroke-width": wrapOutline.widthFraction * sourceWidth * 2,
-    "stroke-linejoin": "round",
-    "stroke-linecap": "round",
-  });
-  for (const path of silhouette) {
-    group.appendChild(
-      svgElement(document, "path", { d: path.getAttribute("d") ?? "", transform: path.getAttribute("transform") ?? "" }),
-    );
+  // Two stacked copies of the silhouette: the rim colour at the full outline
+  // width, then the fill colour inset by the hairline — leaving a hairline rim.
+  const radius = wrapOutline.widthFraction * sourceWidth;
+  const edge = wrapOutline.edgeFraction * sourceWidth;
+  const group = svgElement(document, "g", { id: "wrap-outline", "stroke-linejoin": "round", "stroke-linecap": "round" });
+  for (const [color, width] of [
+    [colors.wrapOutlineEdge, radius * 2],
+    [colors.wrapOutline, (radius - edge) * 2],
+  ] as const) {
+    const layer = svgElement(document, "g", { fill: color, stroke: color, "stroke-width": width });
+    for (const path of silhouette) {
+      layer.appendChild(
+        svgElement(document, "path", { d: path.getAttribute("d") ?? "", transform: path.getAttribute("transform") ?? "" }),
+      );
+    }
+    group.appendChild(layer);
   }
   return group;
 }

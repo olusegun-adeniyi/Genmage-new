@@ -99,7 +99,11 @@ export function wrapOutlinePad(artWidth: number): number {
 
 /** Outline thickness and corner rounding in px, for an artwork `artWidth` wide. */
 export function wrapOutlineSize(artWidth: number) {
-  return { radius: wrapOutline.widthFraction * artWidth, smooth: wrapOutline.smoothFraction * artWidth };
+  return {
+    radius: wrapOutline.widthFraction * artWidth,
+    smooth: wrapOutline.smoothFraction * artWidth,
+    edge: wrapOutline.edgeFraction * artWidth,
+  };
 }
 
 /**
@@ -112,7 +116,7 @@ export function buildWrapOutline(
   rgba: Uint8ClampedArray,
   width: number,
   height: number,
-  { radius, smooth }: { radius: number; smooth: number },
+  { radius, smooth, edge }: { radius: number; smooth: number; edge: number },
   artPixelArea: number,
 ): Uint8ClampedArray | null {
   const pixelCount = width * height;
@@ -138,15 +142,17 @@ export function buildWrapOutline(
   for (let i = 0; i < pixelCount; i++) empty[i] = grown[i] ? 0 : 1;
   const toEmpty = squaredDistanceTo(empty, width, height);
 
-  // 3. Flat outline colour, no shadow.
-  const [r, g, b] = [1, 3, 5].map((o) => hexChannel(colors.wrapOutline, o));
+  // 3. Flat fill with a hairline on its outer rim, both anti-aliased. `inset` is
+  // the distance in from the outline's outer edge.
+  const fill = [1, 3, 5].map((o) => hexChannel(colors.wrapOutline, o));
+  const rim = [1, 3, 5].map((o) => hexChannel(colors.wrapOutlineEdge, o));
   const out = new Uint8ClampedArray(pixelCount * 4);
   for (let i = 0; i < pixelCount; i++) {
-    const coverage = Math.min(1, Math.max(0, Math.sqrt(toEmpty[i]) - smooth + 0.5));
+    const inset = Math.sqrt(toEmpty[i]) - smooth;
+    const coverage = Math.min(1, Math.max(0, inset + 0.5));
     if (coverage <= 0) continue;
-    out[i * 4] = r;
-    out[i * 4 + 1] = g;
-    out[i * 4 + 2] = b;
+    const inner = Math.min(1, Math.max(0, inset - edge + 0.5)); // 0 on the rim, 1 inside it
+    for (let c = 0; c < 3; c++) out[i * 4 + c] = rim[c] + (fill[c] - rim[c]) * inner;
     out[i * 4 + 3] = coverage * 255;
   }
   return out;
