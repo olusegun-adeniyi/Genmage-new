@@ -1,7 +1,8 @@
 import { colors, wrapOutline } from "@/design/tokens";
-import { coverFit, exportFrame } from "@/lib/edit/export-frame";
+import { exportFrame, placeArt } from "@/lib/edit/export-frame";
 import { fillTransform } from "@/lib/edit/fill-colour";
 import { previewStyle } from "@/lib/edit/preview-style";
+import { wrapOutlinePad } from "@/lib/edit/wrap-outline";
 import type { EditState } from "@/lib/validation/edit-state";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
@@ -40,7 +41,7 @@ function wrapOutlineGroup(document: XMLDocument, defs: Element, sourceWidth: num
 }
 
 /**
- * The vector twin of renderEditedImage: same frame size, cover crop, rotation,
+ * The vector twin of renderEditedImage: same frame size, fitted art, rotation,
  * background and border, with the colour edits baked into each shape's fill
  * rather than applied as SVG filters — so the file opens in Figma or
  * Illustrator looking like the canvas, and every shape is still editable
@@ -66,7 +67,6 @@ export async function renderEditedVector(vectorUrl: string, editState: EditState
   }
 
   const { width, height, border, innerWidth, innerHeight } = exportFrame(style);
-  const fit = coverFit(sourceWidth, sourceHeight, innerWidth, innerHeight);
 
   const document = new DOMParser().parseFromString(
     `<svg xmlns="${SVG_NS}" viewBox="0 0 ${width} ${height}" width="${width}" height="${height}"/>`,
@@ -74,7 +74,7 @@ export async function renderEditedVector(vectorUrl: string, editState: EditState
   );
   const root = document.documentElement;
 
-  // The source's own defs (the subject silhouette clip) plus the two crop boxes.
+  // The source's own defs (the subject silhouette clip) plus the frame and layer boxes.
   const defs = svgElement(document, "defs", {});
   for (const sourceDefs of Array.from(sourceRoot.querySelectorAll(":scope > defs"))) {
     for (const child of Array.from(sourceDefs.childNodes)) defs.appendChild(document.importNode(child, true));
@@ -91,18 +91,17 @@ export async function renderEditedVector(vectorUrl: string, editState: EditState
     root.appendChild(svgElement(document, "rect", { width, height, fill: editState.backgroundColor }));
   }
 
-  // Same nesting as the canvas export: cover-crop into the inner box, clip to it,
-  // rotate about its centre, then clip to the frame's inner box.
+  // Same nesting as the canvas export: fit the whole sticker (art + outline) into
+  // the inner box, rotate about its centre, keep within the frame's inner box.
+  const outline = editState.wrapOutline ? wrapOutlineGroup(document, defs, sourceWidth) : null;
+  const place = placeArt(sourceWidth, sourceHeight, outline ? wrapOutlinePad(sourceWidth) : 0, innerWidth, innerHeight);
   const frame = svgElement(document, "g", { "clip-path": "url(#frame)" });
   const rotated = svgElement(document, "g", {
     transform: `translate(${border + innerWidth / 2} ${border + innerHeight / 2}) rotate(${style.rotate}) scale(${style.fitScale}) translate(${-innerWidth / 2} ${-innerHeight / 2})`,
   });
   const layer = svgElement(document, "g", { "clip-path": "url(#layer)" });
-  const artwork = svgElement(document, "g", { transform: `translate(${fit.x} ${fit.y}) scale(${fit.scale})` });
-  if (editState.wrapOutline) {
-    const outline = wrapOutlineGroup(document, defs, sourceWidth);
-    if (outline) artwork.appendChild(outline);
-  }
+  const artwork = svgElement(document, "g", { transform: `translate(${place.x} ${place.y}) scale(${place.scale})` });
+  if (outline) artwork.appendChild(outline);
   for (const child of Array.from(sourceRoot.childNodes)) artwork.appendChild(document.importNode(child, true));
   layer.appendChild(artwork);
   rotated.appendChild(layer);

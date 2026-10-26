@@ -1,4 +1,4 @@
-import { buildWrapOutline, wrapOutlineSize } from "@/lib/edit/wrap-outline";
+import { buildWrapOutline, wrapOutlinePad, wrapOutlineSize } from "@/lib/edit/wrap-outline";
 
 // The outline layer and how it sits against the artwork: it's the artwork's
 // size plus `pad` px on every side, so the outline is never cut at the image edge.
@@ -27,7 +27,7 @@ async function buildOutline(artworkSrc: string): Promise<WrapOutlineLayer | null
   const artWidth = image.naturalWidth;
   const artHeight = image.naturalHeight;
   const size = wrapOutlineSize(artWidth);
-  const pad = Math.ceil(size.radius) + 2;
+  const pad = wrapOutlinePad(artWidth);
 
   const canvas = document.createElement("canvas");
   canvas.width = artWidth + pad * 2;

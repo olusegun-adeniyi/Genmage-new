@@ -1,5 +1,5 @@
 import { applyColorFilters } from "@/lib/edit/color-filters";
-import { coverFit, exportFrame } from "@/lib/edit/export-frame";
+import { exportFrame, placeArt, type ArtPlacement } from "@/lib/edit/export-frame";
 import type { WrapOutlineLayer } from "@/lib/client/wrap-outline";
 import { overlayLayers } from "@/lib/edit/fill-colour";
 import { previewStyle } from "@/lib/edit/preview-style";
@@ -25,16 +25,14 @@ async function loadImage(src: string): Promise<HTMLImageElement> {
   return image;
 }
 
-// object-fit: cover — the same crop the preview's <Image className="object-cover"> makes.
-function drawCover(context: CanvasRenderingContext2D, image: HTMLImageElement, width: number, height: number) {
-  const fit = coverFit(image.naturalWidth, image.naturalHeight, width, height);
-  context.drawImage(image, fit.x, fit.y, image.naturalWidth * fit.scale, image.naturalHeight * fit.scale);
+function drawArt(context: CanvasRenderingContext2D, image: HTMLImageElement, place: ArtPlacement) {
+  context.drawImage(image, place.x, place.y, image.naturalWidth * place.scale, image.naturalHeight * place.scale);
 }
 
 /**
  * Renders an illustration with its edits applied, mirroring IllustrationFrame:
- * a frame at the chosen aspect ratio, background colour behind, the image
- * cover-cropped inside the border, colour-filtered, overlay-tinted (masked to
+ * a frame at the chosen aspect ratio, background colour behind, the whole image
+ * fitted (never cropped) inside the border, colour-filtered, overlay-tinted (masked to
  * the illustration's alpha), rotated about its centre, clipped to the frame.
  */
 export async function renderEditedImage(
@@ -46,10 +44,11 @@ export async function renderEditedImage(
   const image = await loadImage(imageSrc);
 
   const { width, height, border, innerWidth, innerHeight } = exportFrame(style);
+  const place = placeArt(image.naturalWidth, image.naturalHeight, outline?.pad ?? 0, innerWidth, innerHeight);
 
-  // 1. The illustration layer: cover crop, colour filters, then overlays.
+  // 1. The illustration layer: fitted art, colour filters, then overlays.
   const layer = createCanvas(innerWidth, innerHeight);
-  drawCover(layer.context, image, innerWidth, innerHeight);
+  drawArt(layer.context, image, place);
   const pixels = layer.context.getImageData(0, 0, innerWidth, innerHeight);
   applyColorFilters(pixels.data, style);
   layer.context.putImageData(pixels, 0, 0);
@@ -67,29 +66,20 @@ export async function renderEditedImage(
     }
     tint.context.globalCompositeOperation = "destination-in";
     tint.context.globalAlpha = 1;
-    drawCover(tint.context, image, innerWidth, innerHeight);
+    drawArt(tint.context, image, place);
 
     layer.context.globalCompositeOperation = "soft-light";
     layer.context.drawImage(tint.canvas, 0, 0);
     layer.context.globalCompositeOperation = "source-over";
   }
 
-  // The wrap outline goes underneath, after the colour work, so it stays white —
-  // the same layering as the preview.
-  // The outline layer is the artwork plus `pad` on each side: place it on the
-  // artwork's cover box, grown by the same pad at the same scale.
+  // The wrap outline goes underneath, after the colour work, so edits never
+  // tint it — the same layering as the preview.
   if (outline) {
     const outlineImage = await loadImage(outline.src);
-    const fit = coverFit(outline.artWidth, outline.artHeight, innerWidth, innerHeight);
-    const pad = outline.pad * fit.scale;
+    const box = place.outline;
     layer.context.globalCompositeOperation = "destination-over";
-    layer.context.drawImage(
-      outlineImage,
-      fit.x - pad,
-      fit.y - pad,
-      outline.artWidth * fit.scale + pad * 2,
-      outline.artHeight * fit.scale + pad * 2,
-    );
+    layer.context.drawImage(outlineImage, box.x, box.y, box.width, box.height);
     layer.context.globalCompositeOperation = "source-over";
   }
 

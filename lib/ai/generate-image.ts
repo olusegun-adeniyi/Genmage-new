@@ -48,7 +48,7 @@ function getClient(): GoogleGenAI {
 // style's locked prompt (from the style table) says HOW to draw, the user's text
 // says WHAT to draw, and the output requirements are the app's own constraints.
 // The reference line stops the model copying the reference's subject or layout.
-// Square on purpose: aspect ratio is a non-destructive crop applied afterwards
+// Square on purpose: aspect ratio is a non-destructive fit applied afterwards
 // (edit state), and plain white is what the in-browser paper removal turns into
 // real transparency — Gemini can't emit an alpha channel itself.
 function buildPrompt(stylePrompt: string, userPrompt: string): string {
@@ -109,7 +109,7 @@ export async function generateImage(
     ],
     // Pin the output square: left alone, the model copies the reference image's
     // shape (Simple's references are landscape → 1696×608 outputs that the
-    // square canvas then crops). Aspect ratio is a post-generation crop here.
+    // square canvas then shrinks to fit). Aspect ratio is applied after generation.
     config: { responseModalities: [Modality.IMAGE], imageConfig: { aspectRatio: "1:1" } },
   });
 

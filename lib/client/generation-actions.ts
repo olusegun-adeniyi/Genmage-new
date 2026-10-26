@@ -21,7 +21,7 @@ export async function copyPermalink(generation: HistoryItem): Promise<boolean> {
 }
 
 // Downloads exactly what the canvas shows: the paper-removed cutout with every
-// Illustration depth edit, the aspect crop, border and background baked in
+// Illustration depth edit, the aspect frame, border and background baked in
 // (PRD Phase E #39). Transparent where there's no background colour.
 export async function downloadGeneration(generation: HistoryItem): Promise<boolean> {
   await patchEditState(generation.slug, generation.editState);
@@ -39,7 +39,7 @@ export async function downloadGeneration(generation: HistoryItem): Promise<boole
 }
 
 // The editable vector with the same edits baked in as the PNG — colour edits
-// into each shape's fill, crop/rotate/border/background as plain SVG geometry.
+// into each shape's fill, fit/rotate/border/background as plain SVG geometry.
 export async function downloadVector(generation: HistoryItem): Promise<boolean> {
   if (!generation.vectorUrl) return false;
   await patchEditState(generation.slug, generation.editState);

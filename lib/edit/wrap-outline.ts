@@ -88,6 +88,15 @@ function fillHoles(mask: Uint8Array, width: number, height: number) {
 
 const hexChannel = (hex: string, offset: number) => parseInt(hex.slice(offset, offset + 2), 16);
 
+/**
+ * Room the outline needs on every side of an artwork `artWidth` wide (outline
+ * width + 2px for the anti-aliased edge). The outline layer is the artwork plus
+ * this on each side, and exports fit that whole sticker inside the frame.
+ */
+export function wrapOutlinePad(artWidth: number): number {
+  return Math.ceil(wrapOutline.widthFraction * artWidth) + 2;
+}
+
 /** Outline thickness and corner rounding in px, for an artwork `artWidth` wide. */
 export function wrapOutlineSize(artWidth: number) {
   return { radius: wrapOutline.widthFraction * artWidth, smooth: wrapOutline.smoothFraction * artWidth };
