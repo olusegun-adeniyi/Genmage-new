@@ -35,6 +35,8 @@
   --color-edit-warm: #ff8a00;
   --color-edit-tint: #ff2d9b;
   --color-edit-highlight: #ffffff;
+  --color-wrap-outline: #ffffff;
+  --color-wrap-outline-shadow: #181818;
 
   /* Radii — tokens.radii */
   --radius-xs: 6px;

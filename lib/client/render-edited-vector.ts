@@ -1,3 +1,4 @@
+import { colors, wrapOutline } from "@/design/tokens";
 import { coverFit, exportFrame } from "@/lib/edit/export-frame";
 import { fillTransform } from "@/lib/edit/fill-colour";
 import { previewStyle } from "@/lib/edit/preview-style";
@@ -9,6 +10,46 @@ function svgElement(document: XMLDocument, name: string, attributes: Record<stri
   const element = document.createElementNS(SVG_NS, name);
   for (const [key, value] of Object.entries(attributes)) element.setAttribute(key, String(value));
   return element;
+}
+
+/**
+ * The wrap outline as real vector geometry: the subject's traced silhouette,
+ * filled (so interior gaps close, like a die-cut sticker) and stroked white at
+ * twice the outline width with round joins — the stroke's outer half is the
+ * edge. Same proportions as the raster outline (tokens.wrapOutline), plus its
+ * soft shadow as an feDropShadow. Null for full-bleed art (no silhouette).
+ */
+function wrapOutlineGroup(document: XMLDocument, defs: Element, sourceWidth: number): Element | null {
+  const silhouette = Array.from(defs.querySelectorAll("clipPath#subject > path"));
+  if (silhouette.length === 0) return null;
+
+  const shadow = svgElement(document, "filter", { id: "wrap-shadow", x: "-10%", y: "-10%", width: "120%", height: "120%" });
+  shadow.appendChild(
+    svgElement(document, "feDropShadow", {
+      dx: 0,
+      dy: wrapOutline.shadowOffsetFraction * sourceWidth,
+      stdDeviation: wrapOutline.shadowBlurFraction * sourceWidth,
+      "flood-color": colors.wrapOutlineShadow,
+      "flood-opacity": wrapOutline.shadowOpacity,
+    }),
+  );
+  defs.appendChild(shadow);
+
+  const group = svgElement(document, "g", {
+    id: "wrap-outline",
+    fill: colors.wrapOutline,
+    stroke: colors.wrapOutline,
+    "stroke-width": wrapOutline.widthFraction * sourceWidth * 2,
+    "stroke-linejoin": "round",
+    "stroke-linecap": "round",
+    filter: "url(#wrap-shadow)",
+  });
+  for (const path of silhouette) {
+    group.appendChild(
+      svgElement(document, "path", { d: path.getAttribute("d") ?? "", transform: path.getAttribute("transform") ?? "" }),
+    );
+  }
+  return group;
 }
 
 /**
@@ -71,6 +112,10 @@ export async function renderEditedVector(vectorUrl: string, editState: EditState
   });
   const layer = svgElement(document, "g", { "clip-path": "url(#layer)" });
   const artwork = svgElement(document, "g", { transform: `translate(${fit.x} ${fit.y}) scale(${fit.scale})` });
+  if (editState.wrapOutline) {
+    const outline = wrapOutlineGroup(document, defs, sourceWidth);
+    if (outline) artwork.appendChild(outline);
+  }
   for (const child of Array.from(sourceRoot.childNodes)) artwork.appendChild(document.importNode(child, true));
   layer.appendChild(artwork);
   rotated.appendChild(layer);

@@ -36,10 +36,13 @@ export const editStateSchema = z.object({
   // null = no background: nothing is painted behind the illustration.
   backgroundColor: hexColor.nullable(),
   aspectRatio: z.enum(ASPECT_RATIOS),
+  // Die-cut sticker outline around the illustration's silhouette. Defaults so
+  // edit states saved before it existed still parse instead of resetting.
+  wrapOutline: z.boolean().default(false),
 });
 
 export type EditState = z.infer<typeof editStateSchema>;
-export type SliderKey = Exclude<keyof EditState, "borderColor" | "backgroundColor" | "aspectRatio">;
+export type SliderKey = Exclude<keyof EditState, "borderColor" | "backgroundColor" | "aspectRatio" | "wrapOutline">;
 
 // Defaults are the identity edit — a fresh generation renders exactly as Gemini
 // returned it. The handoff's demo values (Rotate 30, Saturation 36, Intensity 10)
@@ -58,6 +61,7 @@ export const DEFAULT_EDIT_STATE: EditState = {
   borderColor: "#ffae00",
   backgroundColor: null,
   aspectRatio: "1:1",
+  wrapOutline: false,
 };
 
 // History written before this shape existed (six-lever edit state) fails the

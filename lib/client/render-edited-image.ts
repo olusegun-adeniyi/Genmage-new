@@ -36,7 +36,7 @@ function drawCover(context: CanvasRenderingContext2D, image: HTMLImageElement, w
  * cover-cropped inside the border, colour-filtered, overlay-tinted (masked to
  * the illustration's alpha), rotated about its centre, clipped to the frame.
  */
-export async function renderEditedImage(imageSrc: string, editState: EditState): Promise<Blob> {
+export async function renderEditedImage(imageSrc: string, editState: EditState, outlineSrc?: string | null): Promise<Blob> {
   const style = previewStyle(editState);
   const image = await loadImage(imageSrc);
 
@@ -66,6 +66,15 @@ export async function renderEditedImage(imageSrc: string, editState: EditState):
 
     layer.context.globalCompositeOperation = "soft-light";
     layer.context.drawImage(tint.canvas, 0, 0);
+    layer.context.globalCompositeOperation = "source-over";
+  }
+
+  // The wrap outline goes underneath, after the colour work, so it stays white —
+  // the same layering as the preview.
+  if (outlineSrc) {
+    const outline = await loadImage(outlineSrc);
+    layer.context.globalCompositeOperation = "destination-over";
+    drawCover(layer.context, outline, innerWidth, innerHeight);
     layer.context.globalCompositeOperation = "source-over";
   }
 

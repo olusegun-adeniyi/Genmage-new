@@ -5,6 +5,7 @@ import type { CSSProperties } from "react";
 import { useEffect, useState } from "react";
 
 import { getCutout } from "@/lib/client/cutout";
+import { getWrapOutline } from "@/lib/client/wrap-outline";
 import { previewStyle } from "@/lib/edit/preview-style";
 import type { EditState } from "@/lib/validation/edit-state";
 
@@ -22,7 +23,9 @@ export function IllustrationFrame({ imageUrl, vectorUrl, prompt, editState }: Il
   // so the in-browser paper removal is only for raster styles.
   const [artworkSrc, setArtworkSrc] = useState<string | null>(vectorUrl ?? null);
   const [loaded, setLoaded] = useState(false);
+  const [outlineSrc, setOutlineSrc] = useState<string | null>(null);
   const preview = previewStyle(editState);
+  const wrapOutline = editState.wrapOutline;
 
   useEffect(() => {
     if (vectorUrl) return;
@@ -34,6 +37,19 @@ export function IllustrationFrame({ imageUrl, vectorUrl, prompt, editState }: Il
       cancelled = true;
     };
   }, [imageUrl, vectorUrl]);
+
+  // Built on first use, then kept: toggling off just fades it out, so toggling
+  // back on is instant (the outline itself is cached per artwork).
+  useEffect(() => {
+    if (!wrapOutline || !artworkSrc || outlineSrc) return;
+    let cancelled = false;
+    getWrapOutline(artworkSrc).then((src) => {
+      if (!cancelled) setOutlineSrc(src);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [wrapOutline, artworkSrc, outlineSrc]);
 
   // --ratio feeds the aspect-fit utility (globals.css); the rest is user edit
   // data, not design tokens, so it's applied inline. With the paper removed, the
@@ -70,6 +86,20 @@ export function IllustrationFrame({ imageUrl, vectorUrl, prompt, editState }: Il
     <div className="fit-container absolute inset-x-3 top-canvas-image-top-compact bottom-canvas-image-bottom-compact flex items-center justify-center lg:top-canvas-image-top lg:right-canvas-image-right lg:bottom-canvas-image-bottom lg:left-4">
       <div className="relative aspect-fit overflow-hidden border-solid" style={frameStyle}>
         <div className="absolute inset-0" style={{ transform: preview.transform }}>
+          {/* The sticker edge sits behind the artwork and outside its colour
+              filter and overlays, so edits never tint it. Same box and fit as the
+              artwork, and the same pixel size, so it lines up exactly. */}
+          {outlineSrc && (
+            <NextImage
+              src={outlineSrc}
+              alt=""
+              fill
+              unoptimized // a local blob URL
+              className={`object-cover transition-opacity duration-150 ease-out ${
+                wrapOutline && loaded ? "opacity-100" : "opacity-0"
+              }`}
+            />
+          )}
           {artworkSrc && (
             <NextImage
               src={artworkSrc}

@@ -2,6 +2,7 @@ import { getCutout } from "@/lib/client/cutout";
 import { patchEditState } from "@/lib/client/generation-api";
 import { renderEditedImage } from "@/lib/client/render-edited-image";
 import { renderEditedVector } from "@/lib/client/render-edited-vector";
+import { getWrapOutline } from "@/lib/client/wrap-outline";
 import type { HistoryItem } from "@/lib/hooks/use-history";
 
 // Share and Export both persist the current edit state first (PRD §7) — the
@@ -29,7 +30,8 @@ export async function downloadGeneration(generation: HistoryItem): Promise<boole
     // Flat styles render from their vector (crisp at any size, already
     // background-free); raster styles from the paper-removed cutout.
     const source = generation.vectorUrl ?? (await getCutout(generation.imageUrl));
-    saveBlob(await renderEditedImage(source, generation.editState), `genmage-${generation.slug}.png`);
+    const outline = generation.editState.wrapOutline ? await getWrapOutline(source) : null;
+    saveBlob(await renderEditedImage(source, generation.editState, outline), `genmage-${generation.slug}.png`);
     return true;
   } catch {
     return false;

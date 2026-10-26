@@ -2,6 +2,7 @@ import type { Ref } from "react";
 
 import { ColourRow } from "@/components/ui/colour-row";
 import { SliderRow } from "@/components/ui/slider-row";
+import { ToggleRow } from "@/components/ui/toggle-row";
 import { BORDER_WEIGHT_CONTROL, DEPTH_CONTROLS, type AdjustmentControl } from "@/lib/edit/adjustment-controls";
 import type { EditState } from "@/lib/validation/edit-state";
 
@@ -57,6 +58,12 @@ export function AdjustmentsPanel({ ref, editState, onChange, disabled }: Adjustm
           disabled={disabled}
           onChange={(backgroundColor) => onChange({ backgroundColor })}
           onClear={() => onChange({ backgroundColor: null })}
+        />
+        <ToggleRow
+          label="Wrap outline"
+          checked={editState.wrapOutline}
+          disabled={disabled}
+          onChange={(wrapOutline) => onChange({ wrapOutline })}
         />
       </div>
     </section>

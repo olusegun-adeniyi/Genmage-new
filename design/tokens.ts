@@ -46,6 +46,11 @@ export const colors = {
   editWarm: "#ff8a00", // Temperature
   editTint: "#ff2d9b", // Tint (magenta axis, as in photo-editing "tint")
   editHighlight: "#ffffff", // Highlight
+
+  // Wrap outline (die-cut sticker edge around the illustration). Illustration
+  // only, like the overlays above — identical in both themes.
+  wrapOutline: "#ffffff", // the outline itself
+  wrapOutlineShadow: "#181818", // its soft shadow — what makes a white edge read on the white canvas
 } as const;
 
 // Dark theme (<html data-theme="dark">, set by the canvas toggle). Same keys as
@@ -81,6 +86,9 @@ export const darkColors: Record<keyof typeof colors, string> = {
   editWarm: "#ff8a00", // illustration overlays don't change with the UI theme
   editTint: "#ff2d9b",
   editHighlight: "#ffffff",
+
+  wrapOutline: "#ffffff", // illustration treatment — doesn't change with the UI theme
+  wrapOutlineShadow: "#181818",
 };
 
 // Theme-dependent values that aren't colour utilities (CSS vars in globals.css).
@@ -160,6 +168,17 @@ export const motion = {
   durationLabel: "120ms", // slider label flipping light/dark as the fill passes under it
   durationImageFade: "400ms", // generation reveal — the one deliberate pause
   easingDefault: "ease-out",
+} as const;
+
+// Wrap outline geometry, as fractions of the illustration's width so it's the
+// same proportion in the preview, the 1024px PNG and the SVG.
+export const wrapOutline = {
+  widthFraction: 0.024, // outline thickness — ~25px on a 1024px image, a chunky sticker edge
+  smoothFraction: 0.012, // rounds the outline's inner corners (dilate further, then erode back)
+  alphaThreshold: 96, // cutout alpha (0–255) that counts as illustration — ignores soft watercolour fringes
+  shadowBlurFraction: 0.01, // soft, close shadow
+  shadowOffsetFraction: 0.004, // nudged down, as if lit from above
+  shadowOpacity: 0.18,
 } as const;
 
 export const slider = {
