@@ -22,16 +22,17 @@ export function StyleTile({ name, imageSrc, selected, onSelect }: StyleTileProps
     >
       {/* Artwork sits on the canvas white (white in both themes) so transparent
           thumbnails read cleanly; a style without a thumbnail keeps the dark placeholder. */}
+      {/* w-full: Safari 18 doesn't stretch flex children inside a <button>, so the
+          contentless thumbnail collapsed to 0px wide and the artwork vanished. */}
       <span
-        className={`relative block h-tile-thumb shrink-0 overflow-hidden rounded-xs ${
+        className={`relative block h-tile-thumb w-full shrink-0 overflow-hidden rounded-xs ${
           imageSrc ? "bg-canvas" : "bg-foreground-soft"
         }`}
       >
-        {/* Eager: tiny and always on screen at load. Safari can leave lazy images
-            inside small clipped containers unloaded until a re-layout. */}
+        {/* Eager: tiny and always on screen at load — lazy loading only delays them. */}
         {imageSrc && <Image src={imageSrc} alt="" fill sizes="96px" loading="eager" className="object-cover" />}
       </span>
-      <span className="flex h-5 min-w-0 items-center px-1 text-background">
+      <span className="flex h-5 w-full min-w-0 items-center px-1 text-background">
         <span className="truncate">{name}</span>
       </span>
     </button>
